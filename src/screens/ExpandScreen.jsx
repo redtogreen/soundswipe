@@ -1,39 +1,48 @@
 export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }) {
   if (!artist) return null
 
-  const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloudUrl)}&color=%23f5a623&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`
+  const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloudUrl)}&color=%23F5A623&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`
 
   return (
     <div className="screen expand-screen">
-      {/* Hero image */}
+      {/* Status bar */}
+      <div className="status-bar">
+        <span className="status-bar-time">9:41</span>
+      </div>
+
+      {/* Masthead with nav */}
+      <div className="masthead">
+        <button className="masthead-btn" onClick={onBack}>← Back</button>
+        <span className="masthead-logo">SoundSwipe</span>
+        <button className="masthead-btn" onClick={onSave}>
+          {isSaved ? '♥ Saved' : '♥ Save'}
+        </button>
+      </div>
+
+      {/* Hero photo */}
       <div className="expand-hero">
         <div
           className="expand-hero-image"
           style={{ backgroundImage: `url(${artist.photo})` }}
         />
-        <div className="expand-hero-gradient" />
-
-        {/* Back button */}
-        <button className="expand-back-btn" onClick={onBack}>
-          ←
-        </button>
       </div>
 
       {/* Scrollable body */}
       <div className="expand-body">
-        {/* Genre badge */}
-        <div className="expand-genre-badge">{artist.genre}</div>
+        {/* Genre + followers */}
+        <div className="expand-meta-row">
+          <div className="genre-stamp">{artist.genre}</div>
+          <span className="expand-followers">{artist.followers.toLocaleString()} followers</span>
+        </div>
 
         {/* Name */}
         <h1 className="expand-name">{artist.name}</h1>
 
         {/* Location */}
-        <div className="expand-location">
-          <span>📍</span>
-          <span>{artist.location}</span>
-          <span style={{ color: 'var(--text-muted)', margin: '0 6px' }}>·</span>
-          <span style={{ color: 'var(--text-muted)' }}>{artist.followers.toLocaleString()} followers</span>
-        </div>
+        <div className="expand-location">📍 {artist.location}</div>
+
+        {/* Rule */}
+        <div className="rule-medium" style={{ marginBottom: 16 }} />
 
         {/* Full bio */}
         <p className="expand-bio">{artist.fullBio}</p>
@@ -54,33 +63,27 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
           />
         </div>
 
-        {/* Track name */}
         <div style={{
           textAlign: 'center',
-          fontSize: 13,
-          color: 'var(--text-secondary)',
-          marginBottom: 8,
+          fontSize: 12,
+          color: 'var(--ink-ghost)',
           fontStyle: 'italic',
+          fontFamily: 'var(--font-body)',
+          marginBottom: 8,
         }}>
           "{artist.trackName}"
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Bottom actions */}
       <div className="expand-actions">
-        <button
-          className="btn btn-skip"
-          onClick={onSkip}
-        >
+        <button className="btn btn-outline" style={{ flex: 1 }} onClick={onSkip}>
           ✕ Skip
         </button>
         <button
-          className="btn btn-save"
+          className="btn btn-amber"
+          style={{ flex: 1, background: isSaved ? 'var(--accent)' : 'var(--accent)' }}
           onClick={onSave}
-          style={isSaved ? {
-            background: 'rgba(34, 197, 94, 0.25)',
-            borderColor: 'var(--save-color)',
-          } : {}}
         >
           {isSaved ? '♥ Saved!' : '♥ Save Artist'}
         </button>

@@ -1,29 +1,50 @@
 export default function SplashScreen({ onStart }) {
   return (
     <div className="screen splash">
-      {/* Vinyl record animation */}
-      <div className="splash-logo-wrap">
-        <div className="splash-vinyl" />
+      {/* Status bar */}
+      <div className="status-bar">
+        <span className="status-bar-time">9:41</span>
       </div>
 
-      {/* Text */}
-      <span className="splash-eyebrow">Independent Music Only</span>
-      <h1 className="splash-title">Sound<br />Swipe</h1>
-      <p className="splash-tagline">Discover What's Next</p>
-
-      {/* Badge */}
-      <div className="splash-indie-badge">
-        No major labels · No top 40 · Ever
+      {/* Amber masthead */}
+      <div className="masthead">
+        <span className="masthead-logo">SoundSwipe</span>
+        <span className="masthead-label">No. 001</span>
       </div>
 
-      {/* CTA */}
-      <button className="btn btn-primary" onClick={onStart}>
-        Start Discovering
-      </button>
+      {/* Body */}
+      <div className="splash-body">
+        <div className="eyebrow" style={{ marginBottom: 10 }}>Discover What's Next</div>
 
-      <button className="btn btn-secondary" style={{ marginTop: 8, fontSize: 13 }}>
-        Artists with under 5,000 followers only
-      </button>
+        <div className="display-xl">
+          Sound<br />
+          <span className="splash-accent">Swipe</span>
+        </div>
+
+        <div className="splash-rule-gap" />
+
+        <p style={{
+          fontSize: 15,
+          color: 'var(--ink-mid)',
+          lineHeight: 1.65,
+          fontFamily: 'var(--font-body)',
+          marginBottom: 16,
+        }}>
+          The only app built exclusively for artists with under 5,000 followers. No major labels. No top 40. Ever.
+        </p>
+
+        <div className="splash-badge">
+          <span>Indie only · Unsigned only · Always</span>
+        </div>
+      </div>
+
+      {/* Footer CTA */}
+      <div className="splash-footer">
+        <button className="btn btn-ink" onClick={onStart}>
+          Start Discovering →
+        </button>
+        <p className="splash-sub">Unsigned artists only · Under 5,000 followers</p>
+      </div>
     </div>
   )
 }
