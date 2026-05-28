@@ -1,5 +1,5 @@
-/* ─── C1 Dispatch Design System ──────────────────────────────────────── */
-/* Paper · Ink · Amber — modern editorial, clean lines                    */
+/* ─── SoundSwipe Design System v2 ──────────────────────────────────── */
+/* Paper · Ink · Sunset Gradient — off-white editorial, pink→yellow accent */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -9,21 +9,35 @@
 }
 
 :root {
-  --bg:           #F2ECE1;
-  --bg-deep:      #EAE3D5;
-  --bg-card:      #FDFAF5;
-  --bg-sunken:    #E0D9CE;
-  --accent:       #F5A623;
-  --accent-on:    #5C3800;
-  --accent-dim:   rgba(245, 166, 35, 0.15);
-  --ink:          #1A1612;
+  /* Surfaces */
+  --bg:           #F7F6F2;  /* warm off-white */
+  --bg-deep:      #F0EEE8;  /* subtle deeper variant */
+  --bg-card:      #FFFFFF;  /* clean white card */
+  --bg-sunken:    #ECEAE3;
+
+  /* Gradient accent (replaces amber) */
+  --accent-pink:      #F7C0CE;
+  --accent-yellow:    #FBE56B;
+  --accent-grad:      linear-gradient(135deg, #F7C0CE 0%, #FBE56B 100%);
+  --accent-grad-90:   linear-gradient(90deg,  #F7C0CE 0%, #FBE56B 100%);
+  --accent-grad-bold: linear-gradient(135deg, #E8588A 0%, #D9A800 100%);
+  --accent-on:        #3D1424;             /* plum — reads on both pink and yellow */
+  --accent-dim:       rgba(247, 192, 206, 0.25);
+  --accent:           #E8588A;             /* solid pink for borders / single-color use */
+
+  /* Ink */
+  --ink:          #1F1218;
   --ink-mid:      #5A5248;
   --ink-light:    #8A8278;
-  --ink-ghost:    #B8B0A4;
-  --border:       #D8D0C2;
-  --border-dark:  #AEA49A;
-  --rule:         1px solid #D8D0C2;
-  --rule-thin:    1px solid #D8D0C2;
+  --ink-ghost:    #A89F94;
+
+  /* Borders */
+  --border:       #E5E1D6;
+  --border-dark:  #C8BFB0;
+  --rule:         1px solid #E5E1D6;
+  --rule-thin:    1px solid #E5E1D6;
+
+  /* Layout */
   --radius:       10px;
   --radius-card:  12px;
   --font-display: 'DM Sans', system-ui, -apple-system, sans-serif;
@@ -69,9 +83,9 @@ html, body {
   background: var(--bg);
 }
 
-/* ─── Masthead (amber bar — appears on every screen) ────────────────── */
+/* ─── Masthead (gradient bar — appears on every screen) ─────────────── */
 .masthead {
-  background: var(--accent);
+  background: var(--accent-grad);
   padding: 10px 20px;
   display: flex;
   align-items: center;
@@ -85,7 +99,7 @@ html, body {
   font-weight: 600;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--accent-on);
 }
 
 .masthead-label {
@@ -99,7 +113,7 @@ html, body {
 .masthead-btn {
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--accent-on);
   background: none;
   border: none;
   cursor: pointer;
@@ -131,34 +145,34 @@ html, body {
 .display-xl {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(52px, 15vw, 68px);
-  line-height: 0.92;
-  letter-spacing: -2px;
+  font-size: clamp(56px, 16vw, 72px);
+  line-height: 0.90;
+  letter-spacing: -2.5px;
   color: var(--ink);
 }
 
 .display-lg {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(34px, 10vw, 46px);
-  line-height: 0.92;
-  letter-spacing: -1.5px;
+  font-size: clamp(38px, 11vw, 50px);
+  line-height: 0.90;
+  letter-spacing: -1.8px;
   color: var(--ink);
 }
 
 .display-md {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 28px;
-  line-height: 0.94;
-  letter-spacing: -0.8px;
+  font-size: 30px;
+  line-height: 0.92;
+  letter-spacing: -1px;
   color: var(--ink);
 }
 
 .eyebrow {
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
   color: var(--ink-ghost);
   font-family: var(--font-body);
@@ -175,8 +189,8 @@ html, body {
 
 /* ─── Rules (section dividers) ──────────────────────────────────────── */
 .rule-heavy {
-  height: 2px;
-  background: var(--accent);
+  height: 3px;
+  background: var(--accent-grad-90);
   flex-shrink: 0;
 }
 
@@ -228,7 +242,7 @@ html, body {
 }
 
 .btn-amber {
-  background: var(--accent);
+  background: var(--accent-grad);
   color: var(--accent-on);
   border-radius: var(--radius);
   padding: 14px 24px;
@@ -236,16 +250,16 @@ html, body {
   font-size: 14px;
 }
 
-/* ─── Genre Badge (amber pill) ──────────────────────────────────────── */
+/* ─── Genre Badge (gradient pill) ───────────────────────────────────── */
 .genre-stamp {
   display: inline-flex;
   align-items: center;
-  background: var(--accent);
+  background: var(--accent-grad);
   color: var(--accent-on);
   font-family: var(--font-body);
   font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   padding: 4px 10px;
   border-radius: 20px;
@@ -265,12 +279,15 @@ html, body {
 }
 
 .splash-accent {
-  color: var(--accent);
+  background: var(--accent-grad-bold);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .splash-rule-gap {
-  height: 2px;
-  background: var(--accent);
+  height: 3px;
+  background: var(--accent-grad-90);
   margin: 20px 0 18px;
 }
 
@@ -338,9 +355,11 @@ html, body {
 .genre-tile:active { background: var(--bg-deep); }
 
 .genre-tile.selected {
-  background: var(--accent);
+  background: var(--accent-grad);
   border-color: transparent;
 }
+
+.genre-tile.selected .genre-tile-name { color: var(--accent-on); }
 
 .genre-tile-emoji { font-size: 16px; flex-shrink: 0; }
 
@@ -404,7 +423,7 @@ html, body {
   border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 0.5px solid var(--border);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -416,7 +435,7 @@ html, body {
 .artist-card:active { cursor: grabbing; }
 
 .artist-card-photo {
-  flex: 0 0 58%;
+  flex: 0 0 62%;
   background-size: cover;
   background-position: center top;
   position: relative;
@@ -427,13 +446,13 @@ html, body {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--accent);
+  height: 3px;
+  background: var(--accent-grad-90);
 }
 
 .artist-card-content {
   flex: 1;
-  padding: 12px 16px 14px;
+  padding: 14px 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -442,20 +461,21 @@ html, body {
 
 .artist-card-name {
   font-family: var(--font-display);
-  font-size: clamp(28px, 8vw, 38px);
+  font-size: clamp(30px, 9vw, 42px);
   font-weight: 600;
-  line-height: 1.0;
-  letter-spacing: -0.5px;
+  line-height: 0.96;
+  letter-spacing: -1px;
   color: var(--ink);
 }
 
 .artist-card-location {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
   color: var(--ink-light);
   font-family: var(--font-body);
-  margin-top: 1px;
+  margin-top: 3px;
 }
 
 .artist-card-bio {
@@ -467,14 +487,15 @@ html, body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .artist-card-hint {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink-ghost);
   font-family: var(--font-body);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
   text-align: center;
   margin-top: auto;
   padding-top: 6px;
@@ -503,21 +524,17 @@ html, body {
   line-height: 1;
 }
 
-.overlay-pass,
-.overlay-save,
-.overlay-more { /* base — state managed by JS opacity */ }
-
 .overlay-pass .overlay-stamp {
   color: #C0392B;
   border-color: #C0392B;
   transform: rotate(-12deg);
-  background: rgba(242, 236, 225, 0.82);
+  background: rgba(247, 246, 242, 0.85);
 }
 
 .overlay-save .overlay-stamp {
   color: var(--accent-on);
   border-color: var(--accent);
-  background: rgba(245, 166, 35, 0.88);
+  background: linear-gradient(135deg, rgba(247, 192, 206, 0.92) 0%, rgba(251, 229, 107, 0.92) 100%);
   transform: rotate(10deg);
 }
 
@@ -525,7 +542,7 @@ html, body {
   color: var(--ink);
   border-color: var(--border-dark);
   transform: rotate(0deg);
-  background: rgba(242, 236, 225, 0.82);
+  background: rgba(247, 246, 242, 0.85);
   font-size: 40px;
 }
 
@@ -568,7 +585,7 @@ html, body {
   width: 58px;
   height: 58px;
   font-size: 24px;
-  background: var(--accent);
+  background: var(--accent-grad);
   border-color: transparent;
   color: var(--accent-on);
 }
@@ -601,6 +618,7 @@ html, body {
   font-weight: 600;
   color: var(--ink);
   line-height: 1;
+  letter-spacing: -0.5px;
 }
 
 .tally-label {
@@ -629,9 +647,9 @@ html, body {
 
 .empty-state h3 {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 600;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
   color: var(--ink);
 }
 
@@ -646,11 +664,20 @@ html, body {
 
 .expand-hero {
   position: relative;
-  height: 52vw;
-  max-height: 260px;
-  min-height: 200px;
+  height: 60vw;
+  max-height: 300px;
+  min-height: 220px;
   flex-shrink: 0;
-  border-bottom: 2px solid var(--accent);
+}
+
+.expand-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-grad-90);
 }
 
 .expand-hero-image {
@@ -671,31 +698,33 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .expand-followers {
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: var(--ink-ghost);
   font-family: var(--font-body);
 }
 
 .expand-name {
   font-family: var(--font-display);
-  font-size: clamp(40px, 12vw, 56px);
+  font-size: clamp(44px, 13vw, 60px);
   font-weight: 600;
-  line-height: 0.9;
-  letter-spacing: -1.5px;
+  line-height: 0.88;
+  letter-spacing: -1.8px;
   color: var(--ink);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .expand-location {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
   color: var(--ink-light);
   font-family: var(--font-body);
   margin-bottom: 16px;
@@ -704,9 +733,9 @@ html, body {
 .expand-bio {
   font-size: 14px;
   color: var(--ink-mid);
-  line-height: 1.7;
+  line-height: 1.75;
   font-family: var(--font-body);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .expand-track-label {
@@ -720,10 +749,11 @@ html, body {
 }
 
 .expand-player {
-  border: 1px solid var(--border);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   margin-bottom: 20px;
+  background: var(--bg-card);
 }
 
 .expand-player iframe { display: block; border: none; }
@@ -747,7 +777,7 @@ html, body {
 
 .saved-count-badge {
   display: inline-flex;
-  background: var(--accent);
+  background: var(--accent-grad);
   border-radius: 20px;
   padding: 3px 12px;
   font-size: 11px;
@@ -766,8 +796,8 @@ html, body {
 .saved-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
+  gap: 14px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.12s;
@@ -776,8 +806,8 @@ html, body {
 .saved-item:active { background: var(--bg-deep); }
 
 .saved-thumb {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   background-size: cover;
   background-position: center;
@@ -787,7 +817,7 @@ html, body {
 .saved-item-info { flex: 1; min-width: 0; }
 
 .saved-item-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--ink);
   font-family: var(--font-body);
@@ -795,6 +825,7 @@ html, body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.2px;
 }
 
 .saved-item-track {
@@ -816,7 +847,10 @@ html, body {
 }
 
 .saved-location-label {
-  font-size: 10px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: var(--ink-ghost);
   font-family: var(--font-body);
 }

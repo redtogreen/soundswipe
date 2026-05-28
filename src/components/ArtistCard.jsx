@@ -161,7 +161,7 @@ export default function ArtistCard({
       {/* Text content */}
       <div className="artist-card-content">
         <div className="artist-card-name">{artist.name}</div>
-        <div className="artist-card-location">📍 {artist.location}</div>
+        <div className="artist-card-location">{artist.location}</div>
         <div className="artist-card-bio">{artist.bio}</div>
         {isTop && (
           <div className="artist-card-hint">← pass &nbsp;·&nbsp; ↑ hear more &nbsp;·&nbsp; save →</div>

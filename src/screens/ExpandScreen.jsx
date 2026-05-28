@@ -39,7 +39,7 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
         <h1 className="expand-name">{artist.name}</h1>
 
         {/* Location */}
-        <div className="expand-location">📍 {artist.location}</div>
+        <div className="expand-location">{artist.location}</div>
 
         {/* Rule */}
         <div className="rule-medium" style={{ marginBottom: 16 }} />

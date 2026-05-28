@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SoundSwipe — Design v2 preview</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/index.css">
+<style>
+  body { background: #EDEAE0; padding: 24px; overflow: auto !important; height: auto !important; }
+  .preview-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+  .phone {
+    width: 390px; height: 780px;
+    border: 1px solid #ccc; border-radius: 36px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.08);
+    overflow: hidden; position: relative;
+    background: #F7F6F2;
+  }
+  .phone-label { text-align: center; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #888; margin-top: 12px; }
+  .app { max-width: none !important; }
+</style>
+</head>
+<body>
+
+<div class="preview-row">
+
+  <!-- ============== SPLASH ============== -->
+  <div>
+    <div class="phone">
+      <div class="app">
+        <div class="screen splash">
+          <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+          <div class="masthead">
+            <span class="masthead-logo">SoundSwipe</span>
+            <span class="masthead-label">No. 001</span>
+          </div>
+          <div class="splash-body">
+            <div class="eyebrow" style="margin-bottom: 10px;">Discover What's Next</div>
+            <div class="display-xl">
+              Sound<br />
+              <span class="splash-accent">Swipe</span>
+            </div>
+            <div class="splash-rule-gap"></div>
+            <p style="font-size: 15px; color: var(--ink-mid); line-height: 1.65; margin-bottom: 16px;">
+              The only app built exclusively for artists with under 5,000 followers. No major labels. No top 40. Ever.
+            </p>
+            <div class="splash-badge"><span>Indie only · Unsigned only · Always</span></div>
+          </div>
+          <div class="splash-footer">
+            <button class="btn btn-ink">Start Discovering →</button>
+            <p class="splash-sub">Unsigned artists only · Under 5,000 followers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Splash</div>
+  </div>
+
+  <!-- ============== SWIPE ============== -->
+  <div>
+    <div class="phone">
+      <div class="app">
+        <div class="screen swipe-screen">
+          <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+          <div class="masthead">
+            <span class="masthead-logo">SoundSwipe</span>
+            <span class="masthead-label">Indie Folk</span>
+          </div>
+          <div class="card-stack-area">
+            <div class="artist-card" style="position: relative; transform: none;">
+              <div class="artist-card-photo" style="background-image: url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&h=800&q=80');">
+                <div style="position:absolute; top: 12px; left: 12px;"><div class="genre-stamp">Indie Folk</div></div>
+                <div class="artist-card-photo-rule"></div>
+              </div>
+              <div class="artist-card-content">
+                <div class="artist-card-name">Mara Voss</div>
+                <div class="artist-card-location">Burlington, VT</div>
+                <div class="artist-card-bio">Spinning stories out of Vermont winters and late-night drives. Mara's fingerpicked guitar and hushed vocals have been quietly winning over coffeehouse crowds since 2019.</div>
+                <div class="artist-card-hint">← pass · ↑ hear more · save →</div>
+              </div>
+            </div>
+          </div>
+          <div class="swipe-actions">
+            <button class="action-btn action-skip">✕</button>
+            <button class="action-btn action-more" style="font-size: 18px;">♫</button>
+            <button class="action-btn action-save">♥</button>
+            <button class="swipe-saved-tally">
+              <span class="tally-num">3</span>
+              <span class="tally-label">Saved</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Swipe</div>
+  </div>
+
+  <!-- ============== EXPAND ============== -->
+  <div>
+    <div class="phone">
+      <div class="app">
+        <div class="screen expand-screen">
+          <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+          <div class="masthead">
+            <button class="masthead-btn">← Back</button>
+            <span class="masthead-logo">SoundSwipe</span>
+            <button class="masthead-btn">♥ Save</button>
+          </div>
+          <div class="expand-hero">
+            <div class="expand-hero-image" style="background-image: url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&h=800&q=80');"></div>
+          </div>
+          <div class="expand-body">
+            <div class="expand-meta-row">
+              <div class="genre-stamp">Indie Folk</div>
+              <span class="expand-followers">892 followers</span>
+            </div>
+            <h1 class="expand-name">Mara<br>Voss</h1>
+            <div class="expand-location">Burlington, VT</div>
+            <div class="rule-medium" style="margin-bottom: 16px;"></div>
+            <p class="expand-bio">Spinning stories out of Vermont winters and late-night drives, Mara Voss started playing open mics at 19 and hasn't stopped. Her fingerpicked guitar and hushed vocals draw comparisons to Adrianne Lenker and Hand Habits — intimate, spare, and alive with small-town detail.</p>
+            <div class="expand-track-label">▶ Now Playing</div>
+            <div class="expand-player" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+              <div style="width: 36px; height: 36px; background: var(--accent-grad); border-radius: 50%; flex-shrink: 0;"></div>
+              <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--ink);">January Light</div>
+                <div style="height: 3px; background: var(--border); border-radius: 2px; margin-top: 6px; position: relative;">
+                  <div style="position: absolute; left: 0; top: 0; width: 38%; height: 3px; background: var(--accent-grad-90); border-radius: 2px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="expand-actions">
+            <button class="btn btn-outline" style="flex: 1;">✕ Skip</button>
+            <button class="btn btn-amber" style="flex: 1;">♥ Save Artist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Expand</div>
+  </div>
+
+</div>
+
+<p style="text-align: center; font-family: 'DM Sans', sans-serif; font-size: 13px; color: #888; margin-top: 32px;">
+  Static preview of the new design system. To see the live React app: <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">npm run dev</code>
+</p>
+
+</body>
+</html>
