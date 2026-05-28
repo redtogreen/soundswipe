@@ -1,4 +1,5 @@
 import { GENRES } from '../data/mockArtists.js'
+import { GENRE_ICONS } from '../components/Icons.jsx'
 
 export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }) {
   const count = selectedGenres.length
@@ -28,13 +29,16 @@ export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }
       <div className="genre-grid">
         {GENRES.map((genre) => {
           const isSelected = selectedGenres.includes(genre.id)
+          const Icon = GENRE_ICONS[genre.id]
           return (
             <div
               key={genre.id}
               className={`genre-tile ${isSelected ? 'selected' : ''}`}
               onClick={() => onToggleGenre(genre.id)}
             >
-              <span className="genre-tile-emoji">{genre.emoji}</span>
+              <span className="genre-tile-icon">
+                {Icon ? <Icon size={18} /> : null}
+              </span>
               <span className="genre-tile-name">{genre.label}</span>
               <span className="genre-check">✓</span>
             </div>

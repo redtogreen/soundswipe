@@ -1,3 +1,5 @@
+import { IconNote, IconCircles } from '../components/Icons.jsx'
+
 export default function SavedScreen({ savedArtists, onSelectArtist, onBack }) {
   return (
     <div className="screen saved-screen">
@@ -25,7 +27,7 @@ export default function SavedScreen({ savedArtists, onSelectArtist, onBack }) {
       <div className="saved-list">
         {savedArtists.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">♪</div>
+            <div className="empty-icon"><IconCircles size={72} /></div>
             <h3>Nothing Yet</h3>
             <p>Swipe right on artists you love to save them here.</p>
             <button
@@ -50,7 +52,10 @@ export default function SavedScreen({ savedArtists, onSelectArtist, onBack }) {
                 />
                 <div className="saved-item-info">
                   <div className="saved-item-name">{artist.name}</div>
-                  <div className="saved-item-track">♪ {artist.trackName}</div>
+                  <div className="saved-item-track">
+                    <IconNote size={11} style={{ verticalAlign: -1, marginRight: 5, display: 'inline-block' }} />
+                    {artist.trackName}
+                  </div>
                 </div>
                 <div className="saved-item-right">
                   <div className="genre-stamp" style={{ fontSize: 8 }}>{artist.genre}</div>

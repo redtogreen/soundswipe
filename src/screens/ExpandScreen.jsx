@@ -1,3 +1,5 @@
+import { IconSkip, IconSave } from '../components/Icons.jsx'
+
 export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }) {
   if (!artist) return null
 
@@ -14,8 +16,9 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
       <div className="masthead">
         <button className="masthead-btn" onClick={onBack}>← Back</button>
         <span className="masthead-logo">SoundSwipe</span>
-        <button className="masthead-btn" onClick={onSave}>
-          {isSaved ? '♥ Saved' : '♥ Save'}
+        <button className="masthead-btn" onClick={onSave} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <IconSave size={14} />
+          {isSaved ? 'Saved' : 'Save'}
         </button>
       </div>
 
@@ -48,7 +51,7 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
         <p className="expand-bio">{artist.fullBio}</p>
 
         {/* Track label */}
-        <div className="expand-track-label">▶ Now Playing</div>
+        <div className="expand-track-label">Now Playing</div>
 
         {/* SoundCloud player */}
         <div className="expand-player">
@@ -77,15 +80,16 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
 
       {/* Bottom actions */}
       <div className="expand-actions">
-        <button className="btn btn-outline" style={{ flex: 1 }} onClick={onSkip}>
-          ✕ Skip
+        <button className="btn btn-outline" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={onSkip}>
+          <IconSkip size={16} /> Skip
         </button>
         <button
           className="btn btn-amber"
-          style={{ flex: 1, background: isSaved ? 'var(--accent)' : 'var(--accent)' }}
+          style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           onClick={onSave}
         >
-          {isSaved ? '♥ Saved!' : '♥ Save Artist'}
+          <IconSave size={16} />
+          {isSaved ? 'Saved' : 'Save Artist'}
         </button>
       </div>
     </div>

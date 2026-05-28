@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import ArtistCard from '../components/ArtistCard.jsx'
+import { IconSkip, IconHear, IconSave, IconCircles } from '../components/Icons.jsx'
 
 export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onExpand, onGoSaved }) {
   const visible = queue.slice(0, 3)
@@ -41,7 +42,7 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
       <div className="card-stack-area">
         {queue.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">♪</div>
+            <div className="empty-icon"><IconCircles size={72} /></div>
             <h3>All Caught Up</h3>
             <p>You've heard every artist in this genre. Try a new genre or check your saved artists.</p>
           </div>
@@ -71,8 +72,9 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
           onClick={triggerSkip}
           disabled={queue.length === 0}
           title="Skip"
+          aria-label="Skip"
         >
-          ✕
+          <IconSkip size={22} />
         </button>
 
         <button
@@ -80,9 +82,9 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
           onClick={triggerMore}
           disabled={queue.length === 0}
           title="Hear more"
-          style={{ fontSize: 18 }}
+          aria-label="Hear more"
         >
-          ♫
+          <IconHear size={22} />
         </button>
 
         <button
@@ -90,8 +92,9 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
           onClick={triggerSave}
           disabled={queue.length === 0}
           title="Save artist"
+          aria-label="Save artist"
         >
-          ♥
+          <IconSave size={26} />
         </button>
 
         {/* Saved tally */}

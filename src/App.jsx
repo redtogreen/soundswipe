@@ -84,7 +84,7 @@ export default function App() {
       if (prev.find((a) => a.id === artist.id)) return prev
       return [...prev, artist]
     })
-    showToast(`♥ Saved ${artist.name}`)
+    showToast(`Saved ${artist.name}`)
   }, [])
 
   const handleExpand = useCallback((artist) => {
