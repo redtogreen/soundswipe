@@ -19,6 +19,7 @@ export default function ArtistCard({
   const iframeRef = useRef(null)
   const widgetRef = useRef(null)
   const audioRef = useRef(null)
+  const [audioPaused, setAudioPaused] = useState(true)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [flyDir, setFlyDir] = useState(null)
@@ -79,11 +80,25 @@ export default function ArtistCard({
     if (widgetRef.current) widgetRef.current.setVolume(isMuted ? 0 : 100)
   }, [isMuted])
 
-  // HTML5 audio: start playback once loaded
+  // Start playback on whichever audio path exists. Must be called from
+  // either an autoplay attempt (works on desktop) or a user gesture
+  // (required on iOS Safari).
+  const startPlayback = () => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : 1
+      audioRef.current.play()
+        .then(() => setAudioPaused(false))
+        .catch(() => { /* still paused — user tap will retry from gesture */ })
+    }
+    if (widgetRef.current) {
+      widgetRef.current.setVolume(isMuted ? 0 : 100)
+      widgetRef.current.play()
+    }
+  }
+
+  // HTML5 audio: try autoplay once metadata is loaded
   const handleAudioLoaded = () => {
-    if (!audioRef.current) return
-    audioRef.current.volume = isMuted ? 0 : 1
-    audioRef.current.play().catch(() => { /* autoplay blocked — user can tap to start */ })
+    startPlayback()
   }
 
   // SoundCloud iframe: hook widget API when iframe loads
@@ -96,8 +111,28 @@ export default function ArtistCard({
         widget.setVolume(isMuted ? 0 : 100)
         widget.play()
       })
-    } catch { /* widget API not ready — iframe autoplays via URL param */ }
+      widget.bind(window.SC.Widget.Events.PLAY, () => setAudioPaused(false))
+      widget.bind(window.SC.Widget.Events.PAUSE, () => setAudioPaused(true))
+      widget.bind(window.SC.Widget.Events.FINISH, () => setAudioPaused(true))
+    } catch { /* widget API not ready */ }
   }
+
+  // Audio button: first tap starts playback (works in gesture context on iOS);
+  // subsequent taps toggle mute.
+  const handleAudioControlClick = (e) => {
+    e.stopPropagation()
+    if (audioPaused) {
+      // Unmute if currently muted, otherwise just start playing
+      if (isMuted && onToggleMute) onToggleMute()
+      startPlayback()
+    } else if (onToggleMute) {
+      onToggleMute()
+    }
+  }
+
+  // The button shows the "muted" speaker icon whenever audio isn't actually
+  // playing, so the user has a clear "tap me to start" affordance.
+  const showMutedIcon = audioPaused || isMuted
 
   // Pick the audio source for this top card
   const previewUrl = isTop ? artist.previewUrl : null
@@ -177,17 +212,17 @@ export default function ArtistCard({
           <div className="genre-stamp">{artist.genre}</div>
         </div>
 
-        {/* Audio mute toggle (only when there's audio) */}
+        {/* Audio control — also starts playback on first tap (required by iOS) */}
         {isTop && hasAudio && (
           <button
             className="audio-control"
-            onClick={(e) => { e.stopPropagation(); onToggleMute && onToggleMute() }}
+            onClick={handleAudioControlClick}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
-            title={isMuted ? 'Unmute' : 'Mute'}
+            aria-label={audioPaused ? 'Play audio' : isMuted ? 'Unmute audio' : 'Mute audio'}
+            title={audioPaused ? 'Tap to play' : isMuted ? 'Unmute' : 'Mute'}
           >
-            {isMuted ? <IconAudioOff size={18} /> : <IconAudioOn size={18} />}
+            {showMutedIcon ? <IconAudioOff size={18} /> : <IconAudioOn size={18} />}
           </button>
         )}
 
@@ -197,8 +232,11 @@ export default function ArtistCard({
             ref={audioRef}
             src={previewUrl}
             loop
+            playsInline
             preload="auto"
             onLoadedData={handleAudioLoaded}
+            onPlay={() => setAudioPaused(false)}
+            onPause={() => setAudioPaused(true)}
             style={{ display: 'none' }}
           />
         )}
