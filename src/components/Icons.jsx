@@ -177,6 +177,27 @@ export function IconGenreAmericana({ size = 18, ...props }) {
   )
 }
 
+// ─── Audio state icons ─────────────────────────────────────────────
+export function IconAudioOn({ size = 18, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} {...props}>
+      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  )
+}
+
+export function IconAudioOff({ size = 18, ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} {...props}>
+      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <line x1="22" y1="9" x2="16" y2="15" />
+      <line x1="16" y1="9" x2="22" y2="15" />
+    </svg>
+  )
+}
+
 // Lookup by genre id — used by GenreScreen
 export const GENRE_ICONS = {
   'indie-folk':        IconGenreIndieFolk,

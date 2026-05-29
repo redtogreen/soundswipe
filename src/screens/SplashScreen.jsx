@@ -1,4 +1,4 @@
-export default function SplashScreen({ onStart }) {
+export default function SplashScreen({ onStart, onOpenManifesto, onReset }) {
   return (
     <div className="screen splash">
       {/* Status bar */}
@@ -14,7 +14,7 @@ export default function SplashScreen({ onStart }) {
 
       {/* Body */}
       <div className="splash-body">
-        <div className="eyebrow" style={{ marginBottom: 10 }}>Discover What's Next</div>
+        <div className="eyebrow" style={{ marginBottom: 10 }}>The music the algorithms missed</div>
 
         <div className="display-xl">
           Sound<br />
@@ -30,20 +30,64 @@ export default function SplashScreen({ onStart }) {
           fontFamily: 'var(--font-body)',
           marginBottom: 16,
         }}>
-          The only app built exclusively for artists with under 5,000 followers. No major labels. No top 40. Ever.
+          Streaming platforms push artists who already have momentum. We built SoundSwipe for everyone else — the songwriters in basements, the bedroom producers, the bands no algorithm has noticed yet.
         </p>
 
         <div className="splash-badge">
-          <span>Indie only · Unsigned only · Always</span>
+          <span>For underdogs · Driven by music, not metrics</span>
         </div>
+
+        <button
+          onClick={onOpenManifesto}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--ink-light)',
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            padding: '14px 0 0',
+            textAlign: 'left',
+            fontFamily: 'var(--font-body)',
+            textDecoration: 'underline',
+            textUnderlineOffset: 3,
+          }}
+        >
+          Why we built this →
+        </button>
       </div>
 
       {/* Footer CTA */}
       <div className="splash-footer">
         <button className="btn btn-ink" onClick={onStart}>
-          Start Discovering →
+          Start Listening →
         </button>
-        <p className="splash-sub">Unsigned artists only · Under 5,000 followers</p>
+        <p className="splash-sub">For artists the world hasn't heard yet</p>
+        {onReset && (
+          <button
+            onClick={() => {
+              if (confirm('Reset all saved artists, genres, and Spotify connection?')) onReset()
+            }}
+            style={{
+              display: 'block',
+              margin: '14px auto 0',
+              background: 'none',
+              border: 'none',
+              color: 'var(--ink-ghost)',
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              padding: 4,
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Reset prototype
+          </button>
+        )}
       </div>
     </div>
   )

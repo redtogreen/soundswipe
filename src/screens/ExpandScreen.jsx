@@ -3,7 +3,13 @@ import { IconSkip, IconSave } from '../components/Icons.jsx'
 export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }) {
   if (!artist) return null
 
-  const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloudUrl)}&color=%23F5A623&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`
+  // Prefer Spotify embed if we have a track ID, fall back to SoundCloud iframe
+  const spotifyEmbed = artist.spotifyTrackId
+    ? `https://open.spotify.com/embed/track/${artist.spotifyTrackId}?utm_source=generator`
+    : null
+  const soundcloudEmbed = !spotifyEmbed && artist.soundcloudUrl
+    ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloudUrl)}&color=%23E8588A&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`
+    : null
 
   return (
     <div className="screen expand-screen">
@@ -41,30 +47,68 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
         {/* Name */}
         <h1 className="expand-name">{artist.name}</h1>
 
-        {/* Location */}
-        <div className="expand-location">{artist.location}</div>
+        {/* Location (optional — Spotify API doesn't provide it) */}
+        {artist.location && <div className="expand-location">{artist.location}</div>}
 
         {/* Rule */}
         <div className="rule-medium" style={{ marginBottom: 16 }} />
 
-        {/* Full bio */}
-        <p className="expand-bio">{artist.fullBio}</p>
+        {/* Full bio (optional) */}
+        {artist.fullBio && <p className="expand-bio">{artist.fullBio}</p>}
 
         {/* Track label */}
         <div className="expand-track-label">Now Playing</div>
 
-        {/* SoundCloud player */}
-        <div className="expand-player">
-          <iframe
-            width="100%"
-            height="166"
-            scrolling="no"
-            frameBorder="no"
-            allow="autoplay"
-            title={`${artist.name} — ${artist.trackName}`}
-            src={embedUrl}
-          />
-        </div>
+        {/* Spotify or SoundCloud embed */}
+        {spotifyEmbed && (
+          <div className="expand-player">
+            <iframe
+              width="100%"
+              height="152"
+              scrolling="no"
+              frameBorder="no"
+              allow="autoplay; encrypted-media"
+              loading="lazy"
+              title={`${artist.name} — ${artist.trackName}`}
+              src={spotifyEmbed}
+            />
+          </div>
+        )}
+        {soundcloudEmbed && (
+          <div className="expand-player">
+            <iframe
+              width="100%"
+              height="166"
+              scrolling="no"
+              frameBorder="no"
+              allow="autoplay"
+              title={`${artist.name} — ${artist.trackName}`}
+              src={soundcloudEmbed}
+            />
+          </div>
+        )}
+
+        {/* Open on Spotify link */}
+        {artist.spotifyUrl && (
+          <a
+            href={artist.spotifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              color: 'var(--ink-light)',
+              textDecoration: 'none',
+              padding: '6px 0',
+              marginBottom: 12,
+            }}
+          >
+            Open on Spotify ↗
+          </a>
+        )}
 
         <div style={{
           textAlign: 'center',

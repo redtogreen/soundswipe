@@ -225,8 +225,9 @@ html, body {
 .btn-ink {
   background: var(--ink);
   color: var(--bg);
-  border-radius: var(--radius);
-  padding: 14px 24px;
+  border-radius: 0;
+  padding: 16px 24px;
+  min-height: 48px;
   width: 100%;
   font-size: 14px;
 }
@@ -339,54 +340,64 @@ html, body {
 }
 
 .genre-tile {
-  border: 1.5px solid var(--border);
+  background: #1F1218;
+  border: 0.5px solid #1F1218;
   border-radius: var(--radius);
-  padding: 10px 12px;
+  padding: 12px;
   cursor: pointer;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-card);
-  transition: background 0.15s, border-color 0.15s;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 100px;
+  transition: background 0.2s, border-color 0.2s;
   user-select: none;
   position: relative;
+  overflow: hidden;
 }
 
-.genre-tile:active { background: var(--bg-deep); }
+.genre-tile:active { transform: scale(0.98); }
 
 .genre-tile.selected {
   background: var(--accent-grad);
   border-color: transparent;
-  color: var(--accent-on);
 }
-
-.genre-tile.selected .genre-tile-name { color: var(--accent-on); }
 
 .genre-tile-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
   flex-shrink: 0;
-  color: var(--ink);
+  color: #FAFAF7;
 }
 
 .genre-tile.selected .genre-tile-icon { color: var(--accent-on); }
 
 .genre-tile-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-  font-family: var(--font-body);
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 5.5vw, 24px);
+  font-weight: 500;
+  line-height: 0.88;
+  letter-spacing: -1px;
+  overflow-wrap: break-word;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.genre-tile.selected .genre-tile-name {
+  background: none;
+  -webkit-text-fill-color: var(--accent-on);
+  color: var(--accent-on);
 }
 
 .genre-check {
   position: absolute;
-  top: 5px;
-  right: 6px;
-  font-size: 9px;
+  top: 8px;
+  right: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--accent-on);
   opacity: 0;
@@ -510,6 +521,32 @@ html, body {
   text-align: center;
   margin-top: auto;
   padding-top: 6px;
+}
+
+/* ─── Audio control (top card mute toggle) ──────────────────────────── */
+.audio-control {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(31, 18, 24, 0.55);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.15s, transform 0.1s;
+  z-index: 5;
+}
+
+.audio-control:active {
+  background: rgba(31, 18, 24, 0.75);
+  transform: scale(0.94);
 }
 
 /* ─── Swipe Overlays ─────────────────────────────────────────────────── */
@@ -812,9 +849,30 @@ html, body {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.12s;
+  position: relative;
 }
 
 .saved-item:active { background: var(--bg-deep); }
+
+.saved-item-menu {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  color: var(--ink-light);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+  font-family: var(--font-body);
+  line-height: 0;
+}
+
+.saved-item-menu:hover { background: var(--bg-deep); color: var(--ink); }
 
 .saved-thumb {
   width: 56px;
@@ -881,7 +939,7 @@ html, body {
   transform: translateX(-50%) translateY(12px);
   background: var(--ink);
   border-radius: var(--radius);
-  padding: 10px 20px;
+  padding: 10px 14px 10px 18px;
   font-size: 13px;
   font-weight: 600;
   color: var(--bg);
@@ -892,11 +950,504 @@ html, body {
   transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .toast.visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.toast-action {
+  background: var(--accent-grad);
+  color: var(--accent-on);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: transform 0.1s;
+}
+
+.toast-action:active { transform: scale(0.94); }
+
+/* ─── Save burst (heart flash overlay) ──────────────────────────────── */
+.save-burst {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.save-burst-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: save-burst-anim 0.8s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}
+
+.save-burst-icon {
+  color: #E8588A;
+  filter: drop-shadow(0 6px 24px rgba(232, 88, 138, 0.4));
+}
+
+.save-burst-label {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  color: var(--ink);
+}
+
+@keyframes save-burst-anim {
+  0%   { opacity: 0; transform: scale(0.4); }
+  25%  { opacity: 1; transform: scale(1.3); }
+  60%  { opacity: 1; transform: scale(1.0); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+
+/* ─── Spotify Connect strip (Saved screen) ──────────────────────────── */
+.spotify-connect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 24px 12px;
+  padding: 12px 14px;
+  background: #1F1218;
+  border-radius: var(--radius);
+  color: #FAFAF7;
+}
+
+.spotify-connect-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.spotify-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.spotify-connect-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #A89F94;
+  margin-bottom: 2px;
+}
+
+.spotify-connect-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FAFAF7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotify-connect-btn {
+  flex-shrink: 0;
+  background: var(--accent-grad);
+  color: var(--accent-on);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.spotify-connect-btn:active { transform: scale(0.96); }
+
+.spotify-connect-secondary {
+  background: none;
+  border: none;
+  color: #A89F94;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.spotify-connect-secondary:hover { color: #FAFAF7; }
+
+/* ─── Export-to-Spotify action card ─────────────────────────────────── */
+.export-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 24px 16px;
+  padding: 14px 16px;
+  background: var(--accent-grad);
+  border-radius: var(--radius);
+  color: var(--accent-on);
+}
+
+.export-card-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent-on);
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.export-card-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--accent-on);
+  margin-bottom: 4px;
+}
+
+.export-card-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-on);
+  opacity: 0.75;
+}
+
+.export-card-btn {
+  flex-shrink: 0;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: transform 0.1s, opacity 0.15s;
+}
+
+.export-card-btn:active { transform: scale(0.96); }
+.export-card-btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* ─── Board tabs (Saved screen) ─────────────────────────────────────── */
+.board-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 24px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+
+.board-tabs::-webkit-scrollbar { display: none; }
+
+.board-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 7px 14px;
+  border: 1px solid var(--border-dark);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.board-tab:active { background: var(--bg-deep); }
+
+.board-tab.selected {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.board-tab-name { letter-spacing: -0.2px; }
+
+.board-tab-count {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--accent-grad);
+  color: var(--accent-on);
+  padding: 1px 6px;
+  border-radius: 8px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.board-tab.selected .board-tab-count {
+  background: var(--accent-grad);
+  color: var(--accent-on);
+}
+
+.board-tab-add {
+  padding: 7px 12px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ─── Board actions row (Import + Sync) ─────────────────────────────── */
+.board-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px 14px;
+  flex-shrink: 0;
+}
+
+.board-action-btn {
+  flex: 1;
+  background: var(--bg-card);
+  color: var(--ink);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.board-action-btn:active { transform: scale(0.98); background: var(--bg-deep); }
+.board-action-btn:disabled { opacity: 0.6; cursor: progress; }
+
+.board-action-primary {
+  background: var(--accent-grad);
+  border-color: transparent;
+  color: var(--accent-on);
+}
+
+/* ─── Move-to-board menu (on saved item) ────────────────────────────── */
+.move-menu {
+  position: absolute;
+  top: 100%;
+  right: 18px;
+  z-index: 50;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(31, 18, 24, 0.18);
+  padding: 8px 0;
+  min-width: 180px;
+  margin-top: -10px;
+}
+
+.move-menu-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-ghost);
+  padding: 4px 14px 8px;
+}
+
+.move-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 9px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.move-menu-item:hover { background: var(--bg-deep); }
+.move-menu-cancel { color: var(--ink-light); font-size: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
+
+/* ─── Import-from-Spotify modal ─────────────────────────────────────── */
+.import-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(31, 18, 24, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  animation: manifesto-fade 0.2s ease-out;
+}
+
+.import-modal {
+  width: 100%;
+  max-width: var(--max-w);
+  background: var(--bg);
+  position: relative;
+  padding: 48px 24px 32px;
+  overflow-y: auto;
+  animation: manifesto-slide 0.32s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.import-title {
+  font-family: var(--font-display);
+  font-size: clamp(34px, 9vw, 44px);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -1.5px;
+  color: var(--ink);
+}
+
+.import-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.import-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  background-color: var(--bg-deep);
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.import-info { flex: 1; min-width: 0; }
+
+.import-name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.import-meta {
+  font-size: 11px;
+  color: var(--ink-light);
+  letter-spacing: 0.3px;
+}
+
+.import-btn {
+  flex-shrink: 0;
+  background: var(--accent-grad);
+  color: var(--accent-on);
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.import-btn:active { transform: scale(0.96); }
+.import-btn:disabled { opacity: 0.5; cursor: progress; }
+
+/* ─── Manifesto modal ───────────────────────────────────────────────── */
+.manifesto-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(31, 18, 24, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  animation: manifesto-fade 0.2s ease-out;
+}
+
+@keyframes manifesto-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.manifesto {
+  width: 100%;
+  max-width: var(--max-w);
+  background: var(--bg);
+  position: relative;
+  padding: 48px 28px 32px;
+  overflow-y: auto;
+  animation: manifesto-slide 0.32s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+@keyframes manifesto-slide {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.manifesto-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--bg-sunken);
+  border-radius: 50%;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.manifesto-close:active { background: var(--border); }
+
+.manifesto-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 11vw, 52px);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -1.8px;
+  color: var(--ink);
+}
+
+.manifesto-body {
+  font-size: 15px;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  font-family: var(--font-body);
+  margin-bottom: 14px;
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────── */

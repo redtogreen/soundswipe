@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import ArtistCard from '../components/ArtistCard.jsx'
 import { IconSkip, IconHear, IconSave, IconCircles } from '../components/Icons.jsx'
 
-export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onExpand, onGoSaved }) {
+export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onExpand, onGoSaved, onBackToGenres, isMuted, onToggleMute }) {
   const visible = queue.slice(0, 3)
 
   const handleSwiped = useCallback(() => {
@@ -43,8 +43,26 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
         {queue.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon"><IconCircles size={72} /></div>
-            <h3>All Caught Up</h3>
-            <p>You've heard every artist in this genre. Try a new genre or check your saved artists.</p>
+            <h3>That's everyone in this corner</h3>
+            <p>You've heard every artist we have for these genres. Try another, or check what you've found so far.</p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                className="btn btn-outline"
+                onClick={onBackToGenres}
+                style={{ width: 'auto', padding: '12px 20px' }}
+              >
+                ← Pick genres
+              </button>
+              {savedArtists.length > 0 && (
+                <button
+                  className="btn btn-ink"
+                  onClick={onGoSaved}
+                  style={{ width: 'auto', padding: '12px 20px' }}
+                >
+                  Your Finds →
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           [...visible].reverse().map((artist, reversedIdx) => {
@@ -55,6 +73,8 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
                 artist={artist}
                 stackPosition={stackPosition}
                 isTop={stackPosition === 0}
+                isMuted={isMuted}
+                onToggleMute={onToggleMute}
                 onSwipeLeft={handleSwipeLeft}
                 onSwipeRight={handleSwipeRight}
                 onSwipeUp={handleSwipeUp}

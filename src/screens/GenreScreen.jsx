@@ -19,6 +19,7 @@ export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }
 
       {/* Header */}
       <div className="genre-header">
+        <div className="eyebrow" style={{ marginBottom: 8 }}>What are you in the mood to find</div>
         <div className="display-lg" style={{ marginBottom: 8 }}>
           Pick Your<br />Sound
         </div>
@@ -37,7 +38,7 @@ export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }
               onClick={() => onToggleGenre(genre.id)}
             >
               <span className="genre-tile-icon">
-                {Icon ? <Icon size={18} /> : null}
+                {Icon ? <Icon size={26} /> : null}
               </span>
               <span className="genre-tile-name">{genre.label}</span>
               <span className="genre-check">✓</span>
@@ -51,18 +52,13 @@ export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }
 
       {/* Footer */}
       <div className="genre-footer">
-        <div className="genre-count">
-          {count === 0
-            ? 'Select at least one genre'
-            : <><strong>{count} genre{count !== 1 ? 's' : ''}</strong> selected</>}
-        </div>
         <button
           className="btn btn-ink"
           onClick={onConfirm}
           disabled={count === 0}
           style={{ opacity: count === 0 ? 0.35 : 1, transition: 'opacity 0.2s' }}
         >
-          Find Artists →
+          Start Listening →
         </button>
       </div>
     </div>
