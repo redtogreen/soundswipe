@@ -13,10 +13,13 @@ export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBac
       .then((list) => { if (!cancelled) setArtists(list) })
       .catch((err) => {
         if (cancelled) return
+        const msg = err?.message || ''
         if (err instanceof InsufficientScopeError) {
           if (onError) onError('insufficient_scope')
+        } else if (msg.includes('Session expired') || msg.includes('Not connected')) {
+          if (onError) onError('session_expired')
         } else {
-          setLoadError(err.message || 'Could not load top artists')
+          setLoadError(msg || 'Could not load top artists')
           setArtists([])
         }
       })

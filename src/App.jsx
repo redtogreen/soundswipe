@@ -362,8 +362,10 @@ export default function App() {
   }
 
   const handleTopArtistsError = (kind) => {
-    if (kind === 'insufficient_scope') {
-      showToast('Permission needed — disconnect and reconnect Spotify')
+    if (kind === 'insufficient_scope' || kind === 'session_expired') {
+      clearAuth()
+      setSpotifyAuth(null)
+      showToast(kind === 'session_expired' ? 'Please reconnect Spotify' : 'Permission needed — reconnect Spotify')
       navigate('connect-or-pick')
     }
   }
