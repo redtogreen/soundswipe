@@ -58,8 +58,52 @@ export default function App() {
   const [expandArtist, setExpandArtist] = useState(null)
   const [expandFromQueue, setExpandFromQueue] = useState(false) // came from swipe screen?
 
-  // Audio preview state (persists across cards)
+  // Audio preview state — a SINGLE persistent <audio> element lives at the
+  // App level so that once the user has started playback once, subsequent
+  // cards can autoplay reliably (iOS Safari/Chrome treat each fresh element
+  // as needing its own gesture, but a persistent one stays "unlocked").
+  const audioRef = useRef(null)
   const [isMuted, setIsMuted] = useState(false)
+  const [audioStarted, setAudioStarted] = useState(false)
+
+  // Update audio src whenever the top swipe-card changes, and try to play.
+  // First card on iOS will fail silently — user taps the audio button to start.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const topCard = screen === 'swipe' ? queue[0] : null
+    const previewUrl = topCard?.previewUrl || null
+    if (previewUrl) {
+      if (audio.src !== previewUrl) audio.src = previewUrl
+      audio.volume = isMuted ? 0 : 1
+      audio.play()
+        .then(() => setAudioStarted(true))
+        .catch(() => { /* autoplay blocked — first tap will start it */ })
+    } else {
+      audio.pause()
+    }
+    // We intentionally don't depend on isMuted here — separate effect handles it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queue, screen])
+
+  // Apply mute changes to live audio element
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = isMuted ? 0 : 1
+  }, [isMuted])
+
+  // Called from the audio button — first tap starts playback (gesture
+  // context), subsequent taps toggle mute.
+  const handleAudioTap = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (!audioStarted) {
+      audio.play()
+        .then(() => setAudioStarted(true))
+        .catch(() => { /* still blocked, e.g. silent switch on */ })
+    } else {
+      setIsMuted((m) => !m)
+    }
+  }
 
   // Manifesto modal
   const [showManifesto, setShowManifesto] = useState(false)
@@ -417,7 +461,8 @@ export default function App() {
           onGoSaved={() => navigate('saved')}
           onBackToGenres={() => navigate('genre')}
           isMuted={isMuted}
-          onToggleMute={() => setIsMuted(m => !m)}
+          audioStarted={audioStarted}
+          onAudioTap={handleAudioTap}
         />
       )}
 
@@ -473,6 +518,16 @@ export default function App() {
       )}
 
       {showManifesto && <Manifesto onClose={() => setShowManifesto(false)} />}
+
+      {/* App-level audio element — persists across cards so iOS keeps the
+          audio context unlocked after the first user-tap-initiated play */}
+      <audio
+        ref={audioRef}
+        loop
+        playsInline
+        preload="auto"
+        style={{ display: 'none' }}
+      />
     </div>
   )
 }

@@ -10,16 +10,17 @@ export default function ArtistCard({
   stackPosition,
   isTop,
   isMuted,
-  onToggleMute,
+  audioStarted,
+  onAudioTap,
   onSwipeLeft,
   onSwipeRight,
   onSwipeUp,
   onSwiped,
 }) {
+  // SoundCloud iframe fallback (for legacy data with soundcloudUrl but no
+  // previewUrl). HTML5 audio lives at the App level now.
   const iframeRef = useRef(null)
   const widgetRef = useRef(null)
-  const audioRef = useRef(null)
-  const [audioPaused, setAudioPaused] = useState(true)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [flyDir, setFlyDir] = useState(null)
@@ -74,34 +75,12 @@ export default function ArtistCard({
     }
   }, [isDragging, onMove, onEnd])
 
-  // ── Audio: keep mute state in sync for both audio paths ────────────
+  // Keep SoundCloud widget volume in sync if it's in use
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = isMuted ? 0 : 1
     if (widgetRef.current) widgetRef.current.setVolume(isMuted ? 0 : 100)
   }, [isMuted])
 
-  // Start playback on whichever audio path exists. Must be called from
-  // either an autoplay attempt (works on desktop) or a user gesture
-  // (required on iOS Safari).
-  const startPlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : 1
-      audioRef.current.play()
-        .then(() => setAudioPaused(false))
-        .catch(() => { /* still paused — user tap will retry from gesture */ })
-    }
-    if (widgetRef.current) {
-      widgetRef.current.setVolume(isMuted ? 0 : 100)
-      widgetRef.current.play()
-    }
-  }
-
-  // HTML5 audio: try autoplay once metadata is loaded
-  const handleAudioLoaded = () => {
-    startPlayback()
-  }
-
-  // SoundCloud iframe: hook widget API when iframe loads
+  // SoundCloud iframe: hook widget API when iframe loads (legacy fallback only)
   const handleIframeLoad = () => {
     if (!window.SC || !iframeRef.current) return
     try {
@@ -111,35 +90,26 @@ export default function ArtistCard({
         widget.setVolume(isMuted ? 0 : 100)
         widget.play()
       })
-      widget.bind(window.SC.Widget.Events.PLAY, () => setAudioPaused(false))
-      widget.bind(window.SC.Widget.Events.PAUSE, () => setAudioPaused(true))
-      widget.bind(window.SC.Widget.Events.FINISH, () => setAudioPaused(true))
     } catch { /* widget API not ready */ }
   }
 
-  // Audio button: first tap starts playback (works in gesture context on iOS);
-  // subsequent taps toggle mute.
+  // Audio button — just delegates to App; App decides whether to start
+  // playback or toggle mute based on whether audio has been started yet.
   const handleAudioControlClick = (e) => {
     e.stopPropagation()
-    if (audioPaused) {
-      // Unmute if currently muted, otherwise just start playing
-      if (isMuted && onToggleMute) onToggleMute()
-      startPlayback()
-    } else if (onToggleMute) {
-      onToggleMute()
-    }
+    if (onAudioTap) onAudioTap()
   }
 
-  // The button shows the "muted" speaker icon whenever audio isn't actually
-  // playing, so the user has a clear "tap me to start" affordance.
-  const showMutedIcon = audioPaused || isMuted
+  // The icon shows the muted speaker until audio has started AND user hasn't
+  // muted it. This gives a clear "tap me to start" cue on the first card,
+  // and a normal mute/unmute toggle on every card after.
+  const showMutedIcon = !audioStarted || isMuted
 
-  // Pick the audio source for this top card
-  const previewUrl = isTop ? artist.previewUrl : null
+  // SoundCloud fallback URL (only if there's no Spotify previewUrl)
   const soundcloudEmbedUrl = isTop && !artist.previewUrl && artist.soundcloudUrl
     ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloudUrl)}&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&buying=false&sharing=false&download=false`
     : null
-  const hasAudio = Boolean(previewUrl || soundcloudEmbedUrl)
+  const hasAudio = Boolean(artist.previewUrl || soundcloudEmbedUrl)
 
   const handleTouchStart = (e) => { const t = e.touches[0]; onStart(t.clientX, t.clientY) }
   const handleTouchMove = (e) => { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY) }
@@ -212,36 +182,22 @@ export default function ArtistCard({
           <div className="genre-stamp">{artist.genre}</div>
         </div>
 
-        {/* Audio control — also starts playback on first tap (required by iOS) */}
+        {/* Audio control — starts playback on first tap (iOS), then toggles mute */}
         {isTop && hasAudio && (
           <button
             className="audio-control"
             onClick={handleAudioControlClick}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            aria-label={audioPaused ? 'Play audio' : isMuted ? 'Unmute audio' : 'Mute audio'}
-            title={audioPaused ? 'Tap to play' : isMuted ? 'Unmute' : 'Mute'}
+            aria-label={!audioStarted ? 'Play audio' : isMuted ? 'Unmute audio' : 'Mute audio'}
+            title={!audioStarted ? 'Tap to play' : isMuted ? 'Unmute' : 'Mute'}
           >
             {showMutedIcon ? <IconAudioOff size={18} /> : <IconAudioOn size={18} />}
           </button>
         )}
 
-        {/* HTML5 audio (Spotify preview MP3) */}
-        {previewUrl && (
-          <audio
-            ref={audioRef}
-            src={previewUrl}
-            loop
-            playsInline
-            preload="auto"
-            onLoadedData={handleAudioLoaded}
-            onPlay={() => setAudioPaused(false)}
-            onPause={() => setAudioPaused(true)}
-            style={{ display: 'none' }}
-          />
-        )}
-
-        {/* SoundCloud iframe fallback */}
+        {/* SoundCloud iframe fallback — only used for legacy artists with
+            soundcloudUrl but no previewUrl */}
         {soundcloudEmbedUrl && (
           <iframe
             ref={iframeRef}

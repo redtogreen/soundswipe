@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import ArtistCard from '../components/ArtistCard.jsx'
 import { IconSkip, IconHear, IconSave, IconCircles } from '../components/Icons.jsx'
 
-export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onExpand, onGoSaved, onBackToGenres, isMuted, onToggleMute }) {
+export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onExpand, onGoSaved, onBackToGenres, isMuted, audioStarted, onAudioTap }) {
   const visible = queue.slice(0, 3)
 
   const handleSwiped = useCallback(() => {
@@ -74,7 +74,8 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
                 stackPosition={stackPosition}
                 isTop={stackPosition === 0}
                 isMuted={isMuted}
-                onToggleMute={onToggleMute}
+                audioStarted={audioStarted}
+                onAudioTap={onAudioTap}
                 onSwipeLeft={handleSwipeLeft}
                 onSwipeRight={handleSwipeRight}
                 onSwipeUp={handleSwipeUp}
