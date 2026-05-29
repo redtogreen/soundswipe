@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { MOCK_ARTISTS } from './data/mockArtists.js'
 import SplashScreen from './screens/SplashScreen.jsx'
+import ConnectOrPickScreen from './screens/ConnectOrPickScreen.jsx'
+import TopArtistsScreen from './screens/TopArtistsScreen.jsx'
 import GenreScreen from './screens/GenreScreen.jsx'
 import SwipeScreen from './screens/SwipeScreen.jsx'
 import ExpandScreen from './screens/ExpandScreen.jsx'
@@ -47,7 +49,7 @@ const initialBoards = persisted?.boards?.length
   : [DEFAULT_BOARD]
 
 export default function App() {
-  const [screen, setScreen] = useState('splash') // splash | genre | swipe | expand | saved
+  const [screen, setScreen] = useState('splash') // splash | connect-or-pick | top-artists | genre | swipe | expand | saved
   const [prevScreen, setPrevScreen] = useState(null)
 
   const [selectedGenres, setSelectedGenres] = useState(persisted?.selectedGenres || [])
@@ -154,16 +156,17 @@ export default function App() {
     handleRedirect().then((result) => {
       if (result?.ok) {
         setSpotifyAuth(result.auth)
-        // Land on Saved screen so user sees their connected state
-        setScreen('saved')
+        // Honor whatever screen the user was in when they kicked off the auth
+        const next = result.returnTo || 'saved'
+        setScreen(next)
         showToast(`Connected as ${result.auth.profile?.displayName || 'Spotify'}`)
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleConnectSpotify = () => {
-    beginAuth().catch((err) => {
+  const handleConnectSpotify = (returnTo = 'saved') => {
+    beginAuth(returnTo).catch((err) => {
       showToast(err.message || 'Could not start Spotify sign-in')
     })
   }
@@ -341,8 +344,29 @@ export default function App() {
     setScreen(to)
   }
 
-  // ── Splash → Genre ─────────────────────────────────────────────────
-  const handleSplashStart = () => navigate('genre')
+  // ── Splash → Connect-or-Pick (or straight to Top Artists if already connected) ──
+  const handleSplashStart = () => {
+    if (spotifyAuth?.accessToken) navigate('top-artists')
+    else navigate('connect-or-pick')
+  }
+
+  // Connect-or-Pick handlers
+  const handleConnectFromOnboarding = () => handleConnectSpotify('top-artists')
+
+  // Top-artists confirmation → derive genres + fetch swipe queue
+  const handleTopArtistsConfirm = async (derivedGenres, seedArtists) => {
+    setSelectedGenres(derivedGenres)
+    const artists = await fetchArtists(derivedGenres)
+    setQueue(artists)
+    navigate('swipe')
+  }
+
+  const handleTopArtistsError = (kind) => {
+    if (kind === 'insufficient_scope') {
+      showToast('Permission needed — disconnect and reconnect Spotify')
+      navigate('connect-or-pick')
+    }
+  }
 
   // ── Genre selection ────────────────────────────────────────────────
   const handleToggleGenre = (genreId) => {
@@ -462,6 +486,23 @@ export default function App() {
     <div className="app">
       {screen === 'splash' && (
         <SplashScreen onStart={handleSplashStart} onOpenManifesto={() => setShowManifesto(true)} onReset={handleReset} />
+      )}
+
+      {screen === 'connect-or-pick' && (
+        <ConnectOrPickScreen
+          onConnectSpotify={handleConnectFromOnboarding}
+          onPickGenres={() => navigate('genre')}
+          onBack={() => navigate('splash')}
+        />
+      )}
+
+      {screen === 'top-artists' && (
+        <TopArtistsScreen
+          onStart={handleTopArtistsConfirm}
+          onPickGenres={() => navigate('genre')}
+          onError={handleTopArtistsError}
+          onBack={() => navigate('connect-or-pick')}
+        />
       )}
 
       {screen === 'genre' && (

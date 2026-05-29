@@ -5,9 +5,12 @@
 const AUTH_KEY = 'spotify_auth_v1'
 const VERIFIER_KEY = 'spotify_pkce_verifier'
 
-// Scopes — read profile + write playlists. If you change this list, existing
-// users will need to reconnect to grant the new permissions.
-const SCOPES = 'user-read-private user-read-email playlist-modify-public playlist-modify-private'
+// Scopes — read profile, write playlists, read top artists. If you change
+// this list, existing users will need to reconnect (show_dialog=true ensures
+// Spotify prompts for the new permissions).
+const SCOPES = 'user-read-private user-read-email user-top-read playlist-modify-public playlist-modify-private'
+
+const RETURN_TO_KEY = 'spotify_return_to'
 
 function redirectUri() {
   return `${window.location.origin}/callback`
@@ -43,12 +46,14 @@ export function isConfigured() {
   return Boolean(getClientId())
 }
 
-export async function beginAuth() {
+export async function beginAuth(returnTo = null) {
   const clientId = getClientId()
   if (!clientId) throw new Error('VITE_SPOTIFY_CLIENT_ID not set')
   const verifier = generateCodeVerifier()
   const challenge = await generateCodeChallenge(verifier)
   sessionStorage.setItem(VERIFIER_KEY, verifier)
+  if (returnTo) sessionStorage.setItem(RETURN_TO_KEY, returnTo)
+  else sessionStorage.removeItem(RETURN_TO_KEY)
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -69,17 +74,20 @@ export async function handleRedirect() {
   const url = new URL(window.location.href)
   const code = url.searchParams.get('code')
   const error = url.searchParams.get('error')
+  const returnTo = sessionStorage.getItem(RETURN_TO_KEY)
   if (error) {
     sessionStorage.removeItem(VERIFIER_KEY)
+    sessionStorage.removeItem(RETURN_TO_KEY)
     window.history.replaceState({}, '', '/')
-    return { ok: false, error }
+    return { ok: false, error, returnTo }
   }
   if (!code) return null
 
   const verifier = sessionStorage.getItem(VERIFIER_KEY)
   if (!verifier) {
+    sessionStorage.removeItem(RETURN_TO_KEY)
     window.history.replaceState({}, '', '/')
-    return { ok: false, error: 'missing_verifier' }
+    return { ok: false, error: 'missing_verifier', returnTo }
   }
 
   const clientId = getClientId()
@@ -97,8 +105,9 @@ export async function handleRedirect() {
     body,
   })
   sessionStorage.removeItem(VERIFIER_KEY)
+  sessionStorage.removeItem(RETURN_TO_KEY)
   window.history.replaceState({}, '', '/')
-  if (!tokenRes.ok) return { ok: false, error: 'token_exchange_failed' }
+  if (!tokenRes.ok) return { ok: false, error: 'token_exchange_failed', returnTo }
 
   const tokens = await tokenRes.json()
 
@@ -123,7 +132,7 @@ export async function handleRedirect() {
     },
   }
   localStorage.setItem(AUTH_KEY, JSON.stringify(auth))
-  return { ok: true, auth }
+  return { ok: true, auth, returnTo }
 }
 
 export function getStoredAuth() {

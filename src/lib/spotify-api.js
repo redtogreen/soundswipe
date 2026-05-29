@@ -97,6 +97,28 @@ export async function createPlaylistFromFinds(finds, opts = {}) {
   return { playlist, addedCount: uris.length, missed }
 }
 
+// ─── User's top artists (Spotify-first onboarding seed) ───────────────
+
+export async function getTopArtists({ timeRange = 'medium_term', limit = 20 } = {}) {
+  const { token } = await getValidToken()
+  const res = await fetch(
+    `https://api.spotify.com/v1/me/top/artists?time_range=${timeRange}&limit=${limit}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  if (res.status === 401 || res.status === 403) throw new InsufficientScopeError()
+  if (!res.ok) throw new Error(`Couldn't load your top artists (${res.status})`)
+  const data = await res.json()
+  return (data.items || []).map((a) => ({
+    id: a.id,
+    name: a.name,
+    image: a.images?.[0]?.url || null,
+    genres: a.genres || [],
+    followers: a.followers?.total ?? 0,
+    popularity: a.popularity ?? 0,
+    url: a.external_urls?.spotify,
+  }))
+}
+
 // ─── Read side: pull user's existing playlists ─────────────────────────
 
 export async function getMyPlaylists(limit = 50) {
