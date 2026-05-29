@@ -91,6 +91,27 @@ export default function App() {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : 1
   }, [isMuted])
 
+  // Pause audio whenever the page is hidden, backgrounded, or unloaded —
+  // otherwise iOS will keep playing the looped track after the user closes
+  // the tab or switches apps.
+  useEffect(() => {
+    const pause = () => {
+      const audio = audioRef.current
+      if (audio && !audio.paused) audio.pause()
+    }
+    const onVisibility = () => { if (document.hidden) pause() }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', pause)
+    window.addEventListener('beforeunload', pause)
+    window.addEventListener('blur', pause)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pagehide', pause)
+      window.removeEventListener('beforeunload', pause)
+      window.removeEventListener('blur', pause)
+    }
+  }, [])
+
   // Called from the audio button — first tap starts playback (gesture
   // context), subsequent taps toggle mute.
   const handleAudioTap = () => {
