@@ -16,12 +16,17 @@ export default function SplashScreen({ onStart, onOpenManifesto, onReset }) {
       <div className="splash-body">
         <div className="eyebrow" style={{ marginBottom: 10 }}>The music the algorithms missed</div>
 
-        <div className="display-xl">
-          Sound<br />
-          <span className="splash-accent">Swipe</span>
+        <div className="display-xl splash-display-anim" aria-label="SoundSwipe">
+          <span className="l l1" aria-hidden="true">S</span>
+          <span className="l l2" aria-hidden="true">o</span>
+          <span className="l l3" aria-hidden="true">u</span>
+          <span className="l l4" aria-hidden="true">n</span>
+          <span className="l l5" aria-hidden="true">d</span>
+          <br />
+          <span className="splash-accent" aria-hidden="true">Swipe</span>
         </div>
 
-        <div className="splash-rule-gap" />
+        <div className="splash-rule-gap splash-rule-anim" />
 
         <p style={{
           fontSize: 15,

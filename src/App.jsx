@@ -524,6 +524,7 @@ export default function App() {
           onExpand={handleExpand}
           onGoSaved={() => navigate('saved')}
           onBackToGenres={() => navigate('genre')}
+          onChangeSource={() => navigate('connect-or-pick')}
           isMuted={isMuted}
           audioStarted={audioStarted}
           onAudioTap={handleAudioTap}
