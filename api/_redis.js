@@ -1,16 +1,33 @@
 // Shared Upstash Redis REST helper.
 // Vercel ignores files starting with `_` for routing, so this isn't an endpoint.
 
-const URL_VAR = 'UPSTASH_REDIS_REST_URL'
-const TOKEN_VAR = 'UPSTASH_REDIS_REST_TOKEN'
+// Vercel-Upstash integration auto-injects env vars with this naming pattern.
+// We also accept the standard Upstash names for self-hosted setups.
+function getRestUrl() {
+  return (
+    process.env.UPSTASH_REDIS_KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.KV_REST_API_URL ||
+    null
+  )
+}
+
+function getRestToken() {
+  return (
+    process.env.UPSTASH_REDIS_KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.KV_REST_API_TOKEN ||
+    null
+  )
+}
 
 export function isRedisConfigured() {
-  return Boolean(process.env[URL_VAR] && process.env[TOKEN_VAR])
+  return Boolean(getRestUrl() && getRestToken())
 }
 
 async function callRedis(path, body) {
-  const url = process.env[URL_VAR]
-  const token = process.env[TOKEN_VAR]
+  const url = getRestUrl()
+  const token = getRestToken()
   if (!url || !token) throw new Error('Upstash not configured')
   const res = await fetch(`${url}${path}`, {
     method: 'POST',
