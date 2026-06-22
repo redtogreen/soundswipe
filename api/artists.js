@@ -160,6 +160,12 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
   const results = []
   const seen = new Set()
 
+  // Cap how many artists we take from each genre so the queue mirrors the
+  // user's taste distribution instead of being all from their #1 genre.
+  // First genres in the list are weighted highest (frontend sorts), so
+  // they get queried first and get whatever the cap allows.
+  const perGenreCap = Math.max(2, Math.ceil(limit / Math.min(genres.length || 1, 6)))
+
   for (const genreKey of genres) {
     const spotifyGenre = GENRE_MAP[genreKey] || genreKey.replace(/-/g, ' ')
     const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(`genre:"${spotifyGenre}"`)}&type=artist&limit=50&market=US`
@@ -170,6 +176,8 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
     if (!searchRes.ok) continue
     const searchData = await searchRes.json()
     const artists = searchData.artists?.items || []
+
+    let takenFromThisGenre = 0
 
     for (const a of artists) {
       if (seen.has(a.id)) continue
@@ -222,6 +230,8 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
         tags: (a.genres || []).slice(0, 5),
       })
 
+      takenFromThisGenre += 1
+      if (takenFromThisGenre >= perGenreCap) break
       if (results.length >= limit) break
     }
     if (results.length >= limit) break

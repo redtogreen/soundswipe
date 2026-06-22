@@ -42,11 +42,21 @@ export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBac
 
   const handleStart = () => {
     if (selectedArtists.length === 0) return
-    // Derive a deduped, slug-form genre list from the selected artists
-    const allGenres = selectedArtists.flatMap((a) => a.genres || [])
-    const slugged = allGenres.map((g) => g.toLowerCase().replace(/\s+/g, '-'))
-    const unique = [...new Set(slugged)]
-    onStart(unique, selectedArtists)
+    // Build a WEIGHTED genre map — how many seed artists share each genre.
+    // Then take the top genres in order so the swipe queue mirrors the
+    // user's actual taste distribution, not a flat dedup.
+    const weights = {}
+    for (const artist of selectedArtists) {
+      for (const g of artist.genres || []) {
+        const slug = g.toLowerCase().replace(/\s+/g, '-')
+        weights[slug] = (weights[slug] || 0) + 1
+      }
+    }
+    const sortedGenres = Object.entries(weights)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([slug]) => slug)
+    onStart(sortedGenres, selectedArtists)
   }
 
   return (
