@@ -47,8 +47,8 @@ export default function ArtistCard({
     setFlyDir(dir)
     if (dir === 'right') onSwipeRight(artist)
     else if (dir === 'up') onSwipeUp(artist)
+    else if (dir === 'left') onSwipeLeft(artist)
     setTimeout(() => {
-      if (dir === 'left') onSwipeLeft()
       onSwiped()
     }, 360)
   }

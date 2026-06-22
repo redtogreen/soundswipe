@@ -97,6 +97,69 @@ export async function createPlaylistFromFinds(finds, opts = {}) {
   return { playlist, addedCount: uris.length, missed }
 }
 
+// ─── Enrich Last.fm artists with Spotify (using user's auth token) ───
+// Client Credentials returns preview_url: null. The user's Authorization
+// Code token (PKCE) DOES return preview_url. So we run this enrichment
+// client-side after the API hands us Last.fm-derived artists.
+
+export async function enrichWithSpotify(artists) {
+  const { token } = await getValidToken()
+  const out = []
+  for (const a of artists) {
+    try {
+      // Find the Spotify artist by name
+      const artistQ = encodeURIComponent(`artist:"${a.name}"`)
+      const artistRes = await fetch(
+        `https://api.spotify.com/v1/search?q=${artistQ}&type=artist&limit=1&market=US`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      let photo = a.photo
+      let spotifyArtistUrl = null
+      if (artistRes.ok) {
+        const data = await artistRes.json()
+        const spArtist = data.artists?.items?.[0]
+        if (spArtist) {
+          photo = spArtist.images?.[0]?.url || photo
+          spotifyArtistUrl = spArtist.external_urls?.spotify || null
+        }
+      }
+
+      // Find a track by that artist with a usable preview_url
+      const trackQ = encodeURIComponent(`artist:"${a.name}"`)
+      const trackRes = await fetch(
+        `https://api.spotify.com/v1/search?q=${trackQ}&type=track&market=US`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      let previewUrl = null
+      let trackName = null
+      let spotifyTrackId = null
+      if (trackRes.ok) {
+        const data = await trackRes.json()
+        const tracks = data.tracks?.items || []
+        const withPreview = tracks.find((t) => t.preview_url)
+        const picked = withPreview || tracks[0]
+        if (picked) {
+          previewUrl = picked.preview_url || null
+          trackName = picked.name
+          spotifyTrackId = picked.id
+        }
+      }
+
+      out.push({
+        ...a,
+        photo,
+        previewUrl,
+        trackName: trackName || a.trackName,
+        spotifyTrackId,
+        spotifyUrl: spotifyArtistUrl,
+      })
+    } catch {
+      out.push(a) // keep the bare card even if enrichment fails
+    }
+  }
+  return out
+}
+
 // ─── User's top artists (Spotify-first onboarding seed) ───────────────
 
 export async function getTopArtists({ timeRange = 'medium_term', limit = 20 } = {}) {

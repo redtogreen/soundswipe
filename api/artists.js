@@ -1,305 +1,175 @@
 /**
- * GET /api/artists?genre=indie-folk,dream-pop&limit=20
+ * GET /api/artists?seed=Artist+One,Artist+Two&limit=20
+ *   or  /api/artists?genre=indie-folk,dream-pop&limit=20  (fallback)
  *
- * Vercel serverless function — returns a list of emerging Spotify artists.
+ * Vercel serverless function — recommends artists via Last.fm.
  *
- * ── Behavior ──────────────────────────────────────────────────────────
- * • If SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET are set, fetches live
- *   artists from Spotify Web API, filtered by followers AND popularity.
- * • Otherwise returns hardcoded mock data so the frontend works without
- *   credentials.
+ * Why Last.fm: Spotify's Feb 2026 API restrictions removed similar-artists,
+ * recommendations, and the popularity/followers fields. Last.fm still has
+ * artist.getSimilar (true similarity scoring) and artist.getInfo (listener
+ * counts), which lets us deliver the "discover emerging artists like the
+ * ones you love" promise.
  *
- * ── To activate live data ─────────────────────────────────────────────
- * 1. Create an app at https://developer.spotify.com/dashboard
- * 2. Add to env vars (local .env and Vercel project settings):
- *      SPOTIFY_CLIENT_ID
- *      SPOTIFY_CLIENT_SECRET
- *      SPOTIFY_MAX_FOLLOWERS    (default 10000)
- *      SPOTIFY_MAX_POPULARITY   (default 35)
- * 3. Redeploy.
+ * The client (browser) then enriches each Last.fm artist with Spotify
+ * search using the user's Authorization Code token — which DOES return
+ * preview_url for tracks, unlike Client Credentials.
+ *
+ * Env vars required:
+ *   LASTFM_API_KEY        - https://www.last.fm/api/account/create (free)
+ *   LASTFM_MAX_LISTENERS  - optional, default 500000 (filters out mega-stars)
  */
 
 const MOCK_ARTISTS = [
   {
     id: 'mock-1', name: 'Mara Voss', genre: 'Indie Folk', location: 'Burlington, VT',
     bio: "Spinning stories out of Vermont winters. Fingerpicked guitar and hushed vocals since 2019.",
-    fullBio: "Mara Voss started playing open mics at 19 and hasn't stopped. Her fingerpicked guitar and hushed vocals draw comparisons to Adrianne Lenker and Hand Habits — intimate, spare, and alive with small-town detail.",
+    fullBio: "Mara Voss started playing open mics at 19 and hasn't stopped.",
     photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&h=800&q=80',
     previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'January Light',
-    followers: 892, popularity: 18, tags: ['indie-folk', 'singer-songwriter'],
-  },
-  {
-    id: 'mock-2', name: 'The Copper Moths', genre: 'Indie Rock', location: 'Austin, TX',
-    bio: 'Four friends making noise in a converted warehouse. Fuzzy guitars, driving rhythms.',
-    fullBio: "The Copper Moths formed in 2021 after four college friends refused to let band practice end. Their sound sits between Parquet Courts and Palehound — angular, nervous, full of forward motion.",
-    photo: 'https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Neon Rust',
-    followers: 3210, popularity: 24, tags: ['indie-rock', 'post-punk'],
-  },
-  {
-    id: 'mock-3', name: 'June Caraway', genre: 'Singer-Songwriter', location: 'Nashville, TN',
-    bio: "Alt-country confessionals that don't fit any radio format — which is the whole point.",
-    fullBio: "June Caraway moved to Nashville from rural Kentucky at 22 with a suitcase and a Telecaster. Her songs are country-adjacent confessionals — think Phoebe Bridgers covering Loretta Lynn with a distortion pedal.",
-    photo: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Dust & Wire',
-    followers: 1450, popularity: 21, tags: ['singer-songwriter', 'alt-country'],
-  },
-  {
-    id: 'mock-4', name: 'Drift Theory', genre: 'Dream Pop', location: 'Seattle, WA',
-    bio: "Reverb-drenched vocals and shimmering synths built for the hour before sunrise.",
-    fullBio: "Drift Theory is the solo project of Noa Hendricks, a 24-year-old producer who layers gauzy vocals over cavernous, slow-burning electronic textures. Influenced equally by Beach House and Burial.",
-    photo: 'https://images.unsplash.com/photo-1499540633125-484965b60031?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Coastline',
-    followers: 2780, popularity: 22, tags: ['dream-pop', 'shoegaze', 'electronic'],
-  },
-  {
-    id: 'mock-5', name: 'Ella Soto', genre: 'R&B / Soul', location: 'Atlanta, GA',
-    bio: "Church harmonies met late-night R&B when Ella was 16. Her voice does things producers twice her age can't explain.",
-    fullBio: "Ella Soto grew up singing in her grandmother's church in Decatur. The collision of gospel harmony and after-hours R&B is right there in every note she sings. At 22, she's released two EPs independently.",
-    photo: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Still Here',
-    followers: 4200, popularity: 28, tags: ['r-b', 'soul'],
-  },
-  {
-    id: 'mock-6', name: 'Phantom Pines', genre: 'Lo-Fi', location: 'Portland, OR',
-    bio: "Beats that sound like they were recorded through a sweater. Lo-fi hip hop for people tired of lo-fi hip hop.",
-    fullBio: "Phantom Pines is producer Theo Marsh's alias. His self-described 'sad-boy boom-bap' blends dusty samples, muffled drums, and occasional spoken word into something too restless to be background music.",
-    photo: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Cedar & Fog',
-    followers: 1900, popularity: 19, tags: ['lo-fi', 'hip-hop'],
-  },
-  {
-    id: 'mock-7', name: 'Neon Cactus', genre: 'Electronic', location: 'Phoenix, AZ',
-    bio: "Club music made for a desert that doesn't have clubs. Equal parts sweat, heat, and neon-lit longing.",
-    fullBio: "Neon Cactus emerged from the Phoenix underground party scene in 2022, throwing DIY raves in industrial spaces. The project, helmed by producer Ria Castillo, draws on her Mexican-American heritage and the kinetic energy of underground dance music.",
-    photo: 'https://images.unsplash.com/photo-1483786160059-d3aa9c4ad9d8?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Desert Mode',
-    followers: 3870, popularity: 26, tags: ['electronic', 'dance'],
-  },
-  {
-    id: 'mock-8', name: 'Oliver Fray', genre: 'Folk', location: 'Asheville, NC',
-    bio: "Old-time Appalachian picking meets contemporary folk storytelling. Sounds like he arrived from 1972.",
-    fullBio: "Oliver Fray learned banjo from a neighbor at age 12 in rural western North Carolina. His fingerpicking merges Appalachian old-time with the introspective songwriting of the contemporary folk revival. He records in an analog studio in Black Mountain.",
-    photo: 'https://images.unsplash.com/photo-1500522144261-ea64433bbe27?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Blue Ridge Morning',
-    followers: 670, popularity: 14, tags: ['folk', 'americana'],
-  },
-  {
-    id: 'mock-9', name: 'Still Waters', genre: 'Dream Pop', location: 'Brooklyn, NY',
-    bio: "The kind of band that sounds better at 2am. Walls of guitar, delayed vocals, rhythms that pull rather than push.",
-    fullBio: "Still Waters formed when two ex-members of separate Brooklyn noise bands decided to make something people could actually hear across a room. Densely layered dream pop built around intertwined guitars, softly buried vocals.",
-    photo: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Pale Signal',
-    followers: 2100, popularity: 23, tags: ['dream-pop', 'shoegaze'],
-  },
-  {
-    id: 'mock-10', name: 'Tana Bright', genre: 'Indie Folk', location: 'Denver, CO',
-    bio: "High-altitude folk with a low-key disposition. Tana writes songs about mountains and mistakes with equal awe.",
-    fullBio: "Tana Bright has been playing music in Colorado for six years, starting as a teenager at the Telluride Folk Festival. Her voice sits in a warm middle register and her lyrics have a plainspoken honesty that eschews easy metaphor.",
-    photo: 'https://images.unsplash.com/photo-1492447216082-4726bf04d1d3?auto=format&fit=crop&w=600&h=800&q=80',
-    previewUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3',
-    soundcloudUrl: null,
-    spotifyUrl: null, trackName: 'Altitude',
-    followers: 1100, popularity: 17, tags: ['indie-folk', 'singer-songwriter'],
+    soundcloudUrl: null, spotifyUrl: null, trackName: 'January Light',
+    followers: 892, popularity: 18, tags: ['indie-folk'],
   },
 ]
 
-// ── Spotify Web API integration ────────────────────────────────────────
-const GENRE_MAP = {
-  'indie-folk':        'indie folk',
-  'dream-pop':         'dream pop',
-  'indie-rock':        'indie rock',
-  'r-b':               'r&b',
-  'singer-songwriter': 'singer-songwriter',
-  'lo-fi':             'lo-fi',
-  'electronic':        'electronic',
-  'folk':              'folk',
-  'shoegaze':          'shoegaze',
-  'americana':         'americana',
-}
+// ─── Last.fm integration ───────────────────────────────────────────────
 
-function toTitleCase(s) {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase())
-}
+const LASTFM_BASE = 'https://ws.audioscrobbler.com/2.0/'
 
-async function getSpotifyToken(clientId, clientSecret) {
-  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${auth}`,
-    },
-    body: 'grant_type=client_credentials',
-  })
-  if (!res.ok) throw new Error(`Spotify token error: ${res.status}`)
+async function lastfmGetSimilar(artistName, apiKey, limit = 30) {
+  const url = `${LASTFM_BASE}?method=artist.getsimilar&artist=${encodeURIComponent(artistName)}&api_key=${apiKey}&format=json&autocorrect=1&limit=${limit}`
+  const res = await fetch(url)
+  if (!res.ok) {
+    console.log('[lastfm] getsimilar failed', { artistName, status: res.status })
+    return []
+  }
   const data = await res.json()
-  return data.access_token
+  if (data.error) {
+    console.log('[lastfm] getsimilar error', { artistName, error: data.error, message: data.message })
+    return []
+  }
+  return data.similarartists?.artist || []
 }
 
-async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clientId, clientSecret) {
-  console.log('[spotify] fetchFromSpotify start', { genres, limit, maxFollowers, maxPopularity })
-  const token = await getSpotifyToken(clientId, clientSecret)
+async function lastfmGetInfo(artistName, apiKey) {
+  const url = `${LASTFM_BASE}?method=artist.getinfo&artist=${encodeURIComponent(artistName)}&api_key=${apiKey}&format=json&autocorrect=1`
+  const res = await fetch(url)
+  if (!res.ok) return null
+  const data = await res.json()
+  if (data.error) return null
+  return data.artist || null
+}
+
+function pickImage(images) {
+  if (!Array.isArray(images)) return null
+  // Last.fm returns multiple image sizes; pick the largest non-empty one
+  const order = ['mega', 'extralarge', 'large', 'medium', 'small']
+  for (const size of order) {
+    const found = images.find((i) => i.size === size && i['#text'])
+    if (found) return found['#text']
+  }
+  return null
+}
+
+async function recommendFromLastfm(seedArtists, limit, maxListeners, apiKey) {
+  console.log('[lastfm] start', { seedArtists, limit, maxListeners })
+
+  // Step 1 — gather candidates from each seed artist (weighted by match score)
+  const candidates = new Map() // name -> { score, image }
+  const seedsToUse = seedArtists.slice(0, 8) // cap concurrent seeds to control quota
+  await Promise.all(seedsToUse.map(async (seed) => {
+    const similar = await lastfmGetSimilar(seed, apiKey, 25)
+    for (const s of similar) {
+      const name = s.name
+      if (!name) continue
+      const score = parseFloat(s.match) || 0
+      const existing = candidates.get(name)
+      if (!existing || score > existing.score) {
+        candidates.set(name, { score, image: pickImage(s.image), seed })
+      }
+    }
+  }))
+  console.log('[lastfm] candidates gathered', { count: candidates.size })
+
+  // Step 2 — sort by match score and enrich the top N with listener counts
+  const sorted = [...candidates.entries()]
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, limit * 3) // fetch 3x to allow filtering
+
   const results = []
-  const seen = new Set()
-
-  // Cap how many artists we take from each genre so the queue mirrors the
-  // user's taste distribution instead of being all from their #1 genre.
-  // First genres in the list are weighted highest (frontend sorts), so
-  // they get queried first and get whatever the cap allows.
-  const perGenreCap = Math.max(2, Math.ceil(limit / Math.min(genres.length || 1, 6)))
-
-  for (const genreKey of genres) {
-    const spotifyGenre = GENRE_MAP[genreKey] || genreKey.replace(/-/g, ' ')
-    // Spotify removed the `genre:"..."` filter syntax in their 2026 API
-    // changes. Use plain-text genre search and match against each
-    // artist's own genres array instead.
-    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(spotifyGenre)}&type=artist`
-
-    const searchRes = await fetch(searchUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!searchRes.ok) {
-      let errorBody = ''
-      try { errorBody = await searchRes.text() } catch {}
-      console.log('[spotify] search failed', { genreKey, url: searchUrl, status: searchRes.status, body: errorBody })
-      continue
-    }
-    const searchData = await searchRes.json()
-    const artists = searchData.artists?.items || []
-    console.log('[spotify] search results', { genreKey, spotifyGenre, artistCount: artists.length, samplePopularity: artists.slice(0, 5).map(a => ({ name: a.name, pop: a.popularity, foll: a.followers?.total, genres: a.genres })) })
-
-    let takenFromThisGenre = 0
-    let rejectedByImages = 0
-
-    // Spotify's Feb 2026 API changes removed popularity, followers, and
-    // (from search responses) the genres array. We can no longer enforce
-    // an "emerging artists" filter via the Web API. Just take the artists
-    // search returns and require they have at least an image.
-
-    for (const a of artists) {
-      if (seen.has(a.id)) continue
-      seen.add(a.id)
-
-      if (!a.images?.length) { rejectedByImages++; continue }
-
-      // Find a representative track via search (the /artists/{id}/top-tracks
-      // endpoint was deprecated by Spotify in Feb 2026).
-      let track = null
-      try {
-        const q = encodeURIComponent(`artist:"${a.name}"`)
-        const trackRes = await fetch(
-          `https://api.spotify.com/v1/search?q=${q}&type=track`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        if (trackRes.ok) {
-          const trackData = await trackRes.json()
-          const tracks = trackData.tracks?.items || []
-          // Prefer tracks that are actually by this artist and have a preview
-          const byThisArtist = tracks.filter((t) =>
-            t.artists?.some((ar) => ar.id === a.id)
-          )
-          track = byThisArtist.find((t) => t.preview_url)
-                || byThisArtist[0]
-                || tracks.find((t) => t.preview_url)
-                || tracks[0]
-        }
-      } catch { /* skip */ }
-      if (!track) continue
-
-      results.push({
-        id: a.id,
-        name: a.name,
-        genre: toTitleCase(spotifyGenre),
-        location: null,                              // Spotify API doesn't return location
-        bio: '',                                     // Spotify API doesn't return bio
-        fullBio: '',
-        photo: a.images[0].url,
-        previewUrl: track.preview_url || null,       // 30-second MP3
-        soundcloudUrl: null,
-        spotifyUrl: a.external_urls?.spotify || null,
-        spotifyTrackId: track.id,
-        trackName: track.name,
-        followers: a.followers?.total ?? 0,
-        popularity: a.popularity ?? 0,
-        tags: (a.genres || []).slice(0, 5),
-      })
-
-      takenFromThisGenre += 1
-      if (takenFromThisGenre >= perGenreCap) break
-      if (results.length >= limit) break
-    }
-    console.log('[spotify] genre done', { genreKey, taken: takenFromThisGenre, rejectedByImages, totalResults: results.length })
+  for (const [name, meta] of sorted) {
     if (results.length >= limit) break
+    const info = await lastfmGetInfo(name, apiKey)
+    if (!info) continue
+
+    const listeners = parseInt(info.stats?.listeners || '0', 10)
+    if (listeners >= maxListeners) continue
+    if (listeners === 0) continue // filter out fake/duplicate entries
+
+    const tags = (info.tags?.tag || []).map((t) => t.name).slice(0, 5)
+    const bioSummary = (info.bio?.summary || '').replace(/<a[^>]*>.*?<\/a>/g, '').replace(/\s+Read more.*$/, '').trim()
+
+    results.push({
+      id: `lastfm-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name,
+      genre: tags[0] ? tags[0].replace(/\b\w/g, (c) => c.toUpperCase()) : 'Discovery',
+      location: null,
+      bio: bioSummary.slice(0, 200),
+      fullBio: bioSummary,
+      photo: meta.image || pickImage(info.image) || null,
+      previewUrl: null, // client enriches via Spotify search (with user token)
+      soundcloudUrl: null,
+      spotifyUrl: null,
+      spotifyTrackId: null,
+      trackName: null,
+      followers: listeners,
+      popularity: parseInt(info.stats?.playcount || '0', 10),
+      tags,
+      _seed: meta.seed,
+      _match: meta.score,
+    })
   }
 
-  console.log('[spotify] fetchFromSpotify done', { totalResults: results.length })
+  console.log('[lastfm] done', { totalResults: results.length })
   return results
 }
 
-// ── Main handler ───────────────────────────────────────────────────────
+// ─── Main handler ───────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400')
+  // Short cache so testing doesn't get stuck on stale data
+  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300')
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { genre = '', limit = '20' } = req.query
-  const genres = genre ? genre.split(',').map((g) => g.trim()).filter(Boolean) : []
-  const limitNum = Math.min(parseInt(limit, 10) || 20, 50)
-  const maxFollowers = parseInt(process.env.SPOTIFY_MAX_FOLLOWERS || '10000', 10)
-  const maxPopularity = parseInt(process.env.SPOTIFY_MAX_POPULARITY || '35', 10)
+  const { seed = '', genre = '', limit = '20' } = req.query
+  const seedArtists = seed ? seed.split(',').map((s) => s.trim()).filter(Boolean) : []
+  const limitNum = Math.min(parseInt(limit, 10) || 20, 30)
+  const maxListeners = parseInt(process.env.LASTFM_MAX_LISTENERS || '500000', 10)
 
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+  const apiKey = process.env.LASTFM_API_KEY
 
-  if (clientId && clientSecret) {
+  if (apiKey && seedArtists.length > 0) {
     try {
-      const artists = await fetchFromSpotify(
-        genres.length ? genres : Object.keys(GENRE_MAP),
-        limitNum, maxFollowers, maxPopularity, clientId, clientSecret
-      )
-      if (artists.length) {
+      const artists = await recommendFromLastfm(seedArtists, limitNum, maxListeners, apiKey)
+      if (artists.length > 0) {
         return res.status(200).json({
-          artists, source: 'spotify',
-          filters: { maxFollowers, maxPopularity },
+          artists, source: 'lastfm',
+          filters: { maxListeners },
         })
       }
     } catch (err) {
-      console.error('Spotify API error:', err.message)
-      // Fall through to mock
+      console.error('Last.fm error:', err.message)
     }
   }
 
-  const filtered = genres.length
-    ? MOCK_ARTISTS.filter((a) => a.tags?.some((t) => genres.includes(t)))
-    : MOCK_ARTISTS
-  const artists = filtered.length ? filtered : MOCK_ARTISTS
-
+  // Fallback to mock
   return res.status(200).json({
-    artists: artists.slice(0, limitNum),
+    artists: MOCK_ARTISTS.slice(0, limitNum),
     source: 'mock',
-    note: 'Add SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars to enable live Spotify data.',
+    note: apiKey
+      ? 'No seed artists provided — connect Spotify so we can use your top artists.'
+      : 'Add LASTFM_API_KEY env var to enable real recommendations.',
   })
 }

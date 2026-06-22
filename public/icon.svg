@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7C0CE"/>
+      <stop offset="100%" stop-color="#FBE56B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <text x="256" y="356" text-anchor="middle"
+        font-family="DM Sans, system-ui, -apple-system, sans-serif"
+        font-size="320" font-weight="600"
+        letter-spacing="-14"
+        fill="#3D1424">S</text>
+</svg>

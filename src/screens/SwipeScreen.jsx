@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import ArtistCard from '../components/ArtistCard.jsx'
 import { IconSkip, IconHear, IconSave, IconCircles } from '../components/Icons.jsx'
 
-export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onExpand, onGoSaved, onBackToGenres, onChangeSource, isMuted, audioStarted, onAudioTap }) {
+export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onPass, onExpand, onGoSaved, onBackToGenres, onChangeSource, isMuted, audioStarted, onAudioTap }) {
   const visible = queue.slice(0, 3)
 
   const handleSwiped = useCallback(() => {
@@ -13,13 +13,20 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onE
     onSave(artist)
   }, [onSave])
 
-  const handleSwipeLeft = useCallback(() => {}, [])
+  const handleSwipeLeft = useCallback((artist) => {
+    if (onPass) onPass(artist)
+  }, [onPass])
 
   const handleSwipeUp = useCallback((artist) => {
     onExpand(artist)
   }, [onExpand])
 
-  const triggerSkip = () => { if (queue.length) setQueue(prev => prev.slice(1)) }
+  const triggerSkip = () => {
+    if (queue.length) {
+      if (onPass) onPass(queue[0])
+      setQueue(prev => prev.slice(1))
+    }
+  }
   const triggerSave = () => { if (queue.length) { onSave(queue[0]); setQueue(prev => prev.slice(1)) } }
   const triggerMore = () => { if (queue.length) onExpand(queue[0]) }
 

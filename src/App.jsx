@@ -11,7 +11,7 @@ import Toast from './components/Toast.jsx'
 import Manifesto from './components/Manifesto.jsx'
 import { IconSave } from './components/Icons.jsx'
 import { beginAuth, handleRedirect, getStoredAuth, clearAuth } from './lib/spotify-auth.js'
-import { createPlaylistFromFinds, syncPlaylist, getMyPlaylists, getPlaylistTracks, InsufficientScopeError } from './lib/spotify-api.js'
+import { createPlaylistFromFinds, syncPlaylist, getMyPlaylists, getPlaylistTracks, enrichWithSpotify, InsufficientScopeError } from './lib/spotify-api.js'
 
 // Filter artists by selected genres. Falls back to all artists if no match.
 function filterArtists(artists, selectedGenres) {
@@ -312,21 +312,35 @@ export default function App() {
     }, 2200)
   }
 
-  const showSaveToast = (artist, onHearMore) => {
+  const showUndoToast = (message) => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
     setToast({
-      message: `${artist.name} → added to your finds`,
+      message,
       visible: true,
-      actionLabel: 'Hear more →',
+      actionLabel: '↶ Undo',
       onAction: () => {
         if (toastTimer.current) clearTimeout(toastTimer.current)
         setToast((prev) => ({ ...prev, visible: false }))
-        onHearMore()
+        handleUndo()
       },
     })
     toastTimer.current = setTimeout(() => {
       setToast((prev) => ({ ...prev, visible: false }))
-    }, 4000)
+    }, 4500)
+  }
+
+  // Track the last swipe so it can be undone
+  const [lastSwipe, setLastSwipe] = useState(null) // { artist, action }
+  const handleUndo = () => {
+    setLastSwipe((current) => {
+      if (!current) return null
+      const { artist, action } = current
+      if (action === 'save') {
+        setSavedArtists((prev) => prev.filter((a) => a.id !== artist.id))
+      }
+      setQueue((prev) => [artist, ...prev])
+      return null
+    })
   }
 
   // Save-burst overlay (heart flash) — key remounts to retrigger animation
@@ -353,10 +367,10 @@ export default function App() {
   // Connect-or-Pick handlers
   const handleConnectFromOnboarding = () => handleConnectSpotify('top-artists')
 
-  // Top-artists confirmation → derive genres + fetch swipe queue
+  // Top-artists confirmation → seed Last.fm similar-artist search
   const handleTopArtistsConfirm = async (derivedGenres, seedArtists) => {
     setSelectedGenres(derivedGenres)
-    const artists = await fetchArtists(derivedGenres)
+    const artists = await fetchArtists({ seedArtists, genres: derivedGenres })
     setQueue(artists)
     navigate('swipe')
   }
@@ -378,25 +392,38 @@ export default function App() {
   }
 
   const handleGenreConfirm = () => {
-    // Fetch from API (falls back to mock if API unavailable)
-    fetchArtists(selectedGenres).then((artists) => {
+    fetchArtists({ genres: selectedGenres }).then((artists) => {
       setQueue(artists)
       navigate('swipe')
     })
   }
 
-  // ── API fetch (with mock fallback) ────────────────────────────────
-  const fetchArtists = async (genres) => {
+  // ── API fetch ──────────────────────────────────────────────────────
+  // Calls Last.fm via our serverless function for similar-artist discovery,
+  // then enriches each result via Spotify (user token) for preview MP3.
+  const fetchArtists = async ({ seedArtists, genres }) => {
     try {
-      const params = new URLSearchParams({ genre: genres.join(','), limit: 20 })
+      const params = new URLSearchParams()
+      if (seedArtists?.length) params.set('seed', seedArtists.map((a) => a.name || a).join(','))
+      if (genres?.length) params.set('genre', genres.join(','))
+      params.set('limit', '20')
       const res = await fetch(`/api/artists?${params}`)
       if (!res.ok) throw new Error('API error')
       const data = await res.json()
-      if (data.artists && data.artists.length > 0) return data.artists
-      throw new Error('Empty response')
+      const list = data.artists || []
+      if (!list.length) throw new Error('Empty response')
+
+      // If user has a Spotify auth, enrich each artist with a real preview URL.
+      if (spotifyAuth?.accessToken && data.source === 'lastfm') {
+        try {
+          return await enrichWithSpotify(list)
+        } catch {
+          return list // fall through to bare cards (no audio) if enrichment fails
+        }
+      }
+      return list
     } catch {
-      // Fallback to mock data
-      return filterArtists(MOCK_ARTISTS, genres)
+      return filterArtists(MOCK_ARTISTS, genres || [])
     }
   }
 
@@ -408,12 +435,14 @@ export default function App() {
       return [...prev, tagged]
     })
     triggerSaveBurst()
-    showSaveToast(tagged, () => {
-      setExpandArtist(tagged)
-      setExpandFromQueue(false)
-      navigate('expand')
-    })
+    setLastSwipe({ artist: tagged, action: 'save' })
+    showUndoToast(`${artist.name} → added to your finds`)
   }, [screen])
+
+  const handlePass = useCallback((artist) => {
+    setLastSwipe({ artist, action: 'pass' })
+    showUndoToast(`Skipped ${artist.name}`)
+  }, [])
 
   // ── Board management ──────────────────────────────────────────────
   const handleCreateBoard = (name) => {
@@ -521,6 +550,7 @@ export default function App() {
           setQueue={setQueue}
           savedArtists={savedArtists}
           onSave={handleSave}
+          onPass={handlePass}
           onExpand={handleExpand}
           onGoSaved={() => navigate('saved')}
           onBackToGenres={() => navigate('genre')}
