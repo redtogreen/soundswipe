@@ -9,6 +9,7 @@ import ExpandScreen from './screens/ExpandScreen.jsx'
 import SavedScreen from './screens/SavedScreen.jsx'
 import Toast from './components/Toast.jsx'
 import Manifesto from './components/Manifesto.jsx'
+import AmplifySheet from './components/AmplifySheet.jsx'
 import { IconSave } from './components/Icons.jsx'
 import { beginAuth, handleRedirect, getStoredAuth, clearAuth } from './lib/spotify-auth.js'
 import { createPlaylistFromFinds, syncPlaylist, getMyPlaylists, getPlaylistTracks, enrichWithSpotify, InsufficientScopeError } from './lib/spotify-api.js'
@@ -352,6 +353,9 @@ export default function App() {
     burstTimer.current = setTimeout(() => setSaveBurst(null), 800)
   }
 
+  // Amplify sheet (the Forbes-worthy mechanic — every save can grow an artist)
+  const [amplifyArtist, setAmplifyArtist] = useState(null)
+
   // ── Navigation helpers ─────────────────────────────────────────────
   const navigate = (to) => {
     setPrevScreen(screen)
@@ -436,7 +440,9 @@ export default function App() {
     })
     triggerSaveBurst()
     setLastSwipe({ artist: tagged, action: 'save' })
-    showUndoToast(`${artist.name} → added to your finds`)
+    // Open the Amplify sheet instead of just a toast — every save is a chance
+    // to actually grow this artist across platforms.
+    setAmplifyArtist(tagged)
   }, [screen])
 
   const handlePass = useCallback((artist) => {
@@ -613,6 +619,25 @@ export default function App() {
       )}
 
       {showManifesto && <Manifesto onClose={() => setShowManifesto(false)} />}
+
+      {amplifyArtist && (
+        <AmplifySheet
+          artist={amplifyArtist}
+          spotifyConnected={Boolean(spotifyAuth?.accessToken)}
+          onUndo={() => {
+            handleUndo()
+            setAmplifyArtist(null)
+          }}
+          onClose={() => setAmplifyArtist(null)}
+          onError={(reason) => {
+            if (reason === 'insufficient_scope') {
+              showToast('Reconnect Spotify to enable follow')
+            } else if (reason === 'not_connected') {
+              showToast('Connect Spotify on Your Finds to follow')
+            }
+          }}
+        />
+      )}
 
       {/* App-level audio element — persists across cards so iOS keeps the
           audio context unlocked after the first user-tap-initiated play */}

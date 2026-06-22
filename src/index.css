@@ -1633,5 +1633,207 @@ html, body {
   margin-bottom: 14px;
 }
 
+/* ─── Amplify sheet — the Forbes-worthy save → grow mechanic ────────── */
+.amplify-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(31, 18, 24, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: amp-fade 0.2s ease-out;
+}
+
+@keyframes amp-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.amplify-sheet {
+  width: 100%;
+  max-width: var(--max-w);
+  background: var(--bg);
+  border-radius: 18px 18px 0 0;
+  padding: 18px 22px calc(28px + var(--safe-bottom));
+  animation: amp-slide-up 0.34s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+@keyframes amp-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.amplify-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.amplify-undo {
+  background: none;
+  border: none;
+  color: var(--ink-light);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.amplify-undo:hover { color: var(--ink); }
+
+.amplify-close {
+  background: var(--bg-deep);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+
+.amplify-close:active { background: var(--border); }
+
+.amplify-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.amplify-icon-burst {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  color: var(--accent-on);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.amplify-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-ghost);
+  margin-bottom: 2px;
+}
+
+.amplify-name {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.amplify-pitch {
+  font-size: 13px;
+  color: var(--ink-mid);
+  line-height: 1.55;
+  margin: 8px 0 18px;
+}
+
+.amplify-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.amplify-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  font-family: var(--font-body);
+}
+
+.amplify-action:active { transform: scale(0.985); }
+.amplify-action:hover { background: var(--bg-deep); }
+.amplify-action:disabled { opacity: 0.65; cursor: progress; }
+
+.amplify-action.amplify-done {
+  background: var(--accent-grad);
+  border-color: transparent;
+  color: var(--accent-on);
+}
+
+.amplify-action-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.amplify-action-label strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+  letter-spacing: -0.2px;
+}
+
+.amplify-action-sub {
+  font-size: 11px;
+  color: var(--ink-light);
+  font-weight: 500;
+}
+
+.amplify-action.amplify-done .amplify-action-sub {
+  color: var(--accent-on);
+  opacity: 0.8;
+}
+
+.amplify-action-arrow {
+  font-size: 16px;
+  color: var(--ink-light);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.amplify-action.amplify-done .amplify-action-arrow {
+  color: var(--accent-on);
+}
+
+.amplify-keep-swiping {
+  display: block;
+  width: 100%;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  border-radius: 0;
+  padding: 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  min-height: 48px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.amplify-keep-swiping:active { transform: scale(0.98); opacity: 0.9; }
+
 /* ─── Scrollbar ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 0; background: transparent; }

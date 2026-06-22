@@ -97,6 +97,38 @@ export async function createPlaylistFromFinds(finds, opts = {}) {
   return { playlist, addedCount: uris.length, missed }
 }
 
+// ─── Follow a Spotify artist (for the Amplify mechanic) ──────────────
+// Looks up the artist by name to get their Spotify ID, then follows.
+// Returns { ok: true } on success, or { ok: false, reason } on failure.
+export async function followSpotifyArtist(artistName) {
+  const { token } = await getValidToken()
+
+  // Find the Spotify artist ID
+  const q = encodeURIComponent(`artist:"${artistName}"`)
+  const searchRes = await fetch(
+    `https://api.spotify.com/v1/search?q=${q}&type=artist&limit=1&market=US`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  if (searchRes.status === 401 || searchRes.status === 403) {
+    throw new InsufficientScopeError()
+  }
+  if (!searchRes.ok) return { ok: false, reason: 'search_failed' }
+  const data = await searchRes.json()
+  const artist = data.artists?.items?.[0]
+  if (!artist) return { ok: false, reason: 'not_found' }
+
+  // Follow the artist
+  const followRes = await fetch(
+    `https://api.spotify.com/v1/me/following?type=artist&ids=${artist.id}`,
+    { method: 'PUT', headers: { Authorization: `Bearer ${token}` } }
+  )
+  if (followRes.status === 401 || followRes.status === 403) {
+    throw new InsufficientScopeError()
+  }
+  if (!followRes.ok && followRes.status !== 204) return { ok: false, reason: `status_${followRes.status}` }
+  return { ok: true, spotifyArtistId: artist.id, spotifyArtistUrl: artist.external_urls?.spotify }
+}
+
 // ─── Enrich Last.fm artists with Spotify (using user's auth token) ───
 // Client Credentials returns preview_url: null. The user's Authorization
 // Code token (PKCE) DOES return preview_url. So we run this enrichment
