@@ -8,12 +8,14 @@ import SwipeScreen from './screens/SwipeScreen.jsx'
 import ExpandScreen from './screens/ExpandScreen.jsx'
 import SavedScreen from './screens/SavedScreen.jsx'
 import RisingScreen from './screens/RisingScreen.jsx'
+import LoadingScreen from './screens/LoadingScreen.jsx'
 import Toast from './components/Toast.jsx'
 import Manifesto from './components/Manifesto.jsx'
 import AmplifySheet from './components/AmplifySheet.jsx'
 import { IconSave } from './components/Icons.jsx'
 import { beginAuth, handleRedirect, getStoredAuth, clearAuth } from './lib/spotify-auth.js'
-import { createPlaylistFromFinds, syncPlaylist, getMyPlaylists, getPlaylistTracks, enrichWithSpotify, InsufficientScopeError } from './lib/spotify-api.js'
+import { createPlaylistFromFinds, syncPlaylist, getMyPlaylists, getPlaylistTracks, enrichWithSpotify, followSpotifyArtist, InsufficientScopeError } from './lib/spotify-api.js'
+import { recordAmp, recordAmpLocal, postAmplify } from './lib/amplify-tracking.js'
 
 // Filter artists by selected genres. Falls back to all artists if no match.
 function filterArtists(artists, selectedGenres) {
@@ -76,6 +78,9 @@ export default function App() {
   const audioRef = useRef(null)
   const [isMuted, setIsMuted] = useState(false)
   const [audioStarted, setAudioStarted] = useState(false)
+  // Surface what's playing so Expand's track list can highlight the active row.
+  const [currentAudioSrc, setCurrentAudioSrc] = useState(null)
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false)
 
   // Update audio src whenever the top swipe-card changes, and try to play.
   // First card on iOS will fail silently — user taps the audio button to start.
@@ -85,17 +90,55 @@ export default function App() {
     const topCard = screen === 'swipe' ? queue[0] : null
     const previewUrl = topCard?.previewUrl || null
     if (previewUrl) {
-      if (audio.src !== previewUrl) audio.src = previewUrl
+      if (audio.src !== previewUrl) {
+        audio.src = previewUrl
+        setCurrentAudioSrc(previewUrl)
+      }
       audio.volume = isMuted ? 0 : 1
       audio.play()
         .then(() => setAudioStarted(true))
         .catch(() => { /* autoplay blocked — first tap will start it */ })
-    } else {
+    } else if (screen !== 'expand') {
+      // Don't pause when entering Expand — user may want to keep listening
       audio.pause()
     }
     // We intentionally don't depend on isMuted here — separate effect handles it
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue, screen])
+
+  // Listen for play/pause events to keep isAudioPlaying in sync.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onPlay = () => setIsAudioPlaying(true)
+    const onPause = () => setIsAudioPlaying(false)
+    audio.addEventListener('play', onPlay)
+    audio.addEventListener('pause', onPause)
+    return () => {
+      audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('pause', onPause)
+    }
+  }, [])
+
+  // Programmatic play/pause from the Expand track list (and anywhere else).
+  const playPreview = (url) => {
+    if (!url) return
+    const audio = audioRef.current
+    if (!audio) return
+    if (audio.src !== url) {
+      audio.src = url
+      setCurrentAudioSrc(url)
+    }
+    audio.volume = isMuted ? 0 : 1
+    audio.play()
+      .then(() => setAudioStarted(true))
+      .catch(() => { /* still locked — user must tap audio button on swipe screen */ })
+  }
+
+  const pausePreview = () => {
+    const audio = audioRef.current
+    if (audio && !audio.paused) audio.pause()
+  }
 
   // Apply mute changes to live audio element
   useEffect(() => {
@@ -310,12 +353,18 @@ export default function App() {
   }
 
   // Toast
-  const [toast, setToast] = useState({ message: '', visible: false, actionLabel: null, onAction: null })
+  const [toast, setToast] = useState({
+    message: '', visible: false, actionLabel: null, onAction: null,
+    status: null, secondaryActionLabel: null, onSecondaryAction: null,
+  })
   const toastTimer = useRef(null)
 
   const showToast = (message) => {
     if (toastTimer.current) clearTimeout(toastTimer.current)
-    setToast({ message, visible: true, actionLabel: null, onAction: null })
+    setToast({
+      message, visible: true, actionLabel: null, onAction: null,
+      status: null, secondaryActionLabel: null, onSecondaryAction: null,
+    })
     toastTimer.current = setTimeout(() => {
       setToast((prev) => ({ ...prev, visible: false }))
     }, 2200)
@@ -326,6 +375,9 @@ export default function App() {
     setToast({
       message,
       visible: true,
+      status: null,
+      secondaryActionLabel: null,
+      onSecondaryAction: null,
       actionLabel: '↶ Undo',
       onAction: () => {
         if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -336,6 +388,49 @@ export default function App() {
     toastTimer.current = setTimeout(() => {
       setToast((prev) => ({ ...prev, visible: false }))
     }, 4500)
+  }
+
+  // Rich "you just saved an artist" toast with auto-follow status + Share + Undo.
+  const showSaveToast = (artist, status) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({
+      message: `Saved ${artist.name}`,
+      status,
+      visible: true,
+      actionLabel: '↶ Undo',
+      onAction: () => {
+        if (toastTimer.current) clearTimeout(toastTimer.current)
+        setToast((prev) => ({ ...prev, visible: false }))
+        handleUndo()
+      },
+      secondaryActionLabel: 'Share',
+      onSecondaryAction: () => shareArtist(artist),
+    })
+    toastTimer.current = setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }))
+    }, 6000)
+  }
+
+  // Native-share fallback to clipboard. Either way, records the amplification.
+  const shareArtist = async (artist) => {
+    const url = 'https://soundswipe-pink.vercel.app/'
+    const text = `Just discovered ${artist.name} on SoundSwipe. Check them out → ${url}`
+    let shared = false
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: artist.name, text, url })
+        shared = true
+      } catch {
+        // user cancelled — don't record
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text)
+        shared = true
+        showToast('Link copied')
+      } catch {}
+    }
+    if (shared) recordAmp(artist, 'share')
   }
 
   // Track the last swipe so it can be undone
@@ -386,9 +481,14 @@ export default function App() {
   // Connect-or-Pick handlers
   const handleConnectFromOnboarding = () => handleConnectSpotify('top-artists')
 
+  // Seed artists currently being matched against (for loading screen display)
+  const [loadingSeeds, setLoadingSeeds] = useState([])
+
   // Top-artists confirmation → seed Last.fm similar-artist search
   const handleTopArtistsConfirm = async (derivedGenres, seedArtists) => {
     setSelectedGenres(derivedGenres)
+    setLoadingSeeds(seedArtists || [])
+    navigate('loading')
     const artists = await fetchArtists({ seedArtists, genres: derivedGenres })
     setQueue(artists)
     navigate('swipe')
@@ -411,6 +511,8 @@ export default function App() {
   }
 
   const handleGenreConfirm = () => {
+    setLoadingSeeds([])
+    navigate('loading')
     fetchArtists({ genres: selectedGenres }).then((artists) => {
       setQueue(artists)
       navigate('swipe')
@@ -447,6 +549,9 @@ export default function App() {
   }
 
   // ── Swipe actions ──────────────────────────────────────────────────
+  // Saving an artist also auto-follows them on every connected service.
+  // The user shouldn't have to confirm a follow they've already opted into
+  // by connecting Spotify (and later Apple Music, YouTube) during onboarding.
   const handleSave = useCallback((artist) => {
     const tagged = { ...artist, boardId: DEFAULT_BOARD.id }
     setSavedArtists((prev) => {
@@ -455,10 +560,44 @@ export default function App() {
     })
     triggerSaveBurst()
     setLastSwipe({ artist: tagged, action: 'save' })
-    // Open the Amplify sheet instead of just a toast — every save is a chance
-    // to actually grow this artist across platforms.
-    setAmplifyArtist(tagged)
-  }, [screen])
+
+    // Surface an immediate toast that promises the follow is in progress
+    // (so the user keeps swiping without waiting for the API roundtrip).
+    if (spotifyAuth?.accessToken) {
+      showSaveToast(tagged, 'Following on Spotify…')
+      followSpotifyArtist(artist.name)
+        .then((result) => {
+          if (result.ok) {
+            recordAmpLocal(tagged.id, 'spotify_follow')
+            postAmplify(tagged, 'spotify_follow')
+            // Update the toast in place — only if THIS save's toast is still up.
+            setToast((prev) =>
+              prev.visible && prev.message === `Saved ${tagged.name}`
+                ? { ...prev, status: 'Followed on Spotify ✓' }
+                : prev
+            )
+          } else {
+            setToast((prev) =>
+              prev.visible && prev.message === `Saved ${tagged.name}`
+                ? { ...prev, status: 'Couldn’t follow on Spotify' }
+                : prev
+            )
+          }
+        })
+        .catch((err) => {
+          const status = err instanceof InsufficientScopeError
+            ? 'Reconnect Spotify to enable follow'
+            : 'Couldn’t follow on Spotify'
+          setToast((prev) =>
+            prev.visible && prev.message === `Saved ${tagged.name}`
+              ? { ...prev, status }
+              : prev
+          )
+        })
+    } else {
+      showSaveToast(tagged, 'Connect Spotify to auto-follow')
+    }
+  }, [screen, spotifyAuth])
 
   const handlePass = useCallback((artist) => {
     setLastSwipe({ artist, action: 'pass' })
@@ -589,7 +728,15 @@ export default function App() {
           onSave={handleExpandSave}
           onSkip={handleExpandSkip}
           onBack={handleExpandBack}
+          playPreview={playPreview}
+          pausePreview={pausePreview}
+          currentAudioSrc={currentAudioSrc}
+          isAudioPlaying={isAudioPlaying}
         />
+      )}
+
+      {screen === 'loading' && (
+        <LoadingScreen seedArtists={loadingSeeds} />
       )}
 
       {screen === 'rising' && (
@@ -627,6 +774,9 @@ export default function App() {
         visible={toast.visible}
         actionLabel={toast.actionLabel}
         onAction={toast.onAction}
+        status={toast.status}
+        secondaryActionLabel={toast.secondaryActionLabel}
+        onSecondaryAction={toast.onSecondaryAction}
       />
 
       {saveBurst && (

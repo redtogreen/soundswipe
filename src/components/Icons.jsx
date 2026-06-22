@@ -60,6 +60,25 @@ export function IconCircles({ size = 60, strokeWidth = 1, ...props }) {
   )
 }
 
+export function IconPlay({ size = 14, ...props }) {
+  // Solid filled triangle — clearer at small sizes than an outline play icon
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M7 5v14l12-7z" />
+    </svg>
+  )
+}
+
+export function IconPause({ size = 14, ...props }) {
+  // Two thick bars, same weight as Play
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <rect x="6" y="5" width="4" height="14" rx="0.5" />
+      <rect x="14" y="5" width="4" height="14" rx="0.5" />
+    </svg>
+  )
+}
+
 export function IconArrow({ size = 16, direction = 'right', ...props }) {
   // Directional thin arrow for nav cues
   const rotation = { right: 0, left: 180, up: -90, down: 90 }[direction] || 0

@@ -1,28 +1,69 @@
-import { IconSkip, IconSave } from '../components/Icons.jsx'
+import { useEffect, useState } from 'react'
+import { IconSkip, IconSave, IconPlay, IconPause } from '../components/Icons.jsx'
+import { getArtistTracks, formatDuration } from '../lib/itunes.js'
 
-export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }) {
+export default function ExpandScreen({
+  artist,
+  onSave,
+  onSkip,
+  onBack,
+  isSaved,
+  playPreview,
+  pausePreview,
+  currentAudioSrc,
+  isAudioPlaying,
+}) {
   if (!artist) return null
 
-  // Prefer Spotify embed if we have a track ID, fall back to SoundCloud iframe
-  const spotifyEmbed = artist.spotifyTrackId
-    ? `https://open.spotify.com/embed/track/${artist.spotifyTrackId}?utm_source=generator`
-    : null
-  const soundcloudEmbed = !spotifyEmbed && artist.soundcloudUrl
-    ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(artist.soundcloudUrl)}&color=%23E8588A&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false`
-    : null
+  const [tracks, setTracks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch up to 6 more tracks from iTunes whenever the expanded artist changes.
+  // The current swipe-card preview is shown first so playback feels continuous.
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    getArtistTracks(artist.name, 6)
+      .then((more) => {
+        if (cancelled) return
+        const head =
+          artist.previewUrl && !more.some((t) => t.previewUrl === artist.previewUrl)
+            ? [{
+                id: `head-${artist.id}`,
+                trackName: artist.trackName || 'Now playing',
+                previewUrl: artist.previewUrl,
+                duration: null,
+              }]
+            : []
+        setTracks([...head, ...more])
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [artist.id, artist.name])
+
+  const handleTrackTap = (track) => {
+    const isCurrent = currentAudioSrc === track.previewUrl
+    if (isCurrent && isAudioPlaying) {
+      pausePreview && pausePreview()
+    } else {
+      playPreview && playPreview(track.previewUrl)
+    }
+  }
 
   return (
     <div className="screen expand-screen">
-      {/* Status bar */}
       <div className="status-bar">
         <span className="status-bar-time">9:41</span>
       </div>
 
-      {/* Masthead with nav */}
       <div className="masthead">
         <button className="masthead-btn" onClick={onBack}>← Back</button>
         <span className="masthead-logo">SoundSwipe</span>
-        <button className="masthead-btn" onClick={onSave} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+        <button
+          className="masthead-btn"
+          onClick={onSave}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+        >
           <IconSave size={14} />
           {isSaved ? 'Saved' : 'Save'}
         </button>
@@ -36,95 +77,77 @@ export default function ExpandScreen({ artist, onSave, onSkip, onBack, isSaved }
         />
       </div>
 
-      {/* Scrollable body */}
       <div className="expand-body">
-        {/* Genre + followers */}
         <div className="expand-meta-row">
           <div className="genre-stamp">{artist.genre}</div>
-          <span className="expand-followers">{artist.followers.toLocaleString()} followers</span>
+          {artist.followers > 0 && (
+            <span className="expand-followers">
+              {artist.followers.toLocaleString()} listeners
+            </span>
+          )}
         </div>
 
-        {/* Name */}
         <h1 className="expand-name">{artist.name}</h1>
-
-        {/* Location (optional — Spotify API doesn't provide it) */}
         {artist.location && <div className="expand-location">{artist.location}</div>}
 
-        {/* Rule */}
-        <div className="rule-medium" style={{ marginBottom: 16 }} />
+        <div className="rule-medium" style={{ marginBottom: 18 }} />
 
-        {/* Full bio (optional) */}
-        {artist.fullBio && <p className="expand-bio">{artist.fullBio}</p>}
+        {/* ── Track list — the new "Hear more" ─────────────────────── */}
+        <div className="expand-section-label">More from {artist.name}</div>
+        <div className="expand-tracks">
+          {loading && <div className="expand-tracks-msg">Loading songs…</div>}
+          {!loading && tracks.length === 0 && (
+            <div className="expand-tracks-msg">No more previews available right now.</div>
+          )}
+          {tracks.map((t, i) => {
+            const isCurrent = currentAudioSrc === t.previewUrl
+            const isPlaying = isCurrent && isAudioPlaying
+            return (
+              <button
+                key={t.id}
+                className={`expand-track ${isCurrent ? 'current' : ''} ${isPlaying ? 'playing' : ''}`}
+                onClick={() => handleTrackTap(t)}
+              >
+                <span className="expand-track-icon" aria-hidden="true">
+                  {isPlaying ? <IconPause size={14} /> : <IconPlay size={14} />}
+                </span>
+                <span className="expand-track-index">{String(i + 1).padStart(2, '0')}</span>
+                <span className="expand-track-name">{t.trackName}</span>
+                {t.duration && (
+                  <span className="expand-track-duration">{formatDuration(t.duration)}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
 
-        {/* Track label */}
-        <div className="expand-track-label">Now Playing</div>
-
-        {/* Spotify or SoundCloud embed */}
-        {spotifyEmbed && (
-          <div className="expand-player">
-            <iframe
-              width="100%"
-              height="152"
-              scrolling="no"
-              frameBorder="no"
-              allow="autoplay; encrypted-media"
-              loading="lazy"
-              title={`${artist.name} — ${artist.trackName}`}
-              src={spotifyEmbed}
-            />
-          </div>
-        )}
-        {soundcloudEmbed && (
-          <div className="expand-player">
-            <iframe
-              width="100%"
-              height="166"
-              scrolling="no"
-              frameBorder="no"
-              allow="autoplay"
-              title={`${artist.name} — ${artist.trackName}`}
-              src={soundcloudEmbed}
-            />
-          </div>
-        )}
-
-        {/* Open on Spotify link */}
         {artist.spotifyUrl && (
           <a
             href={artist.spotifyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-block',
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              color: 'var(--ink-light)',
-              textDecoration: 'none',
-              padding: '6px 0',
-              marginBottom: 12,
-            }}
+            className="expand-platform-link"
           >
             Open on Spotify ↗
           </a>
         )}
 
-        <div style={{
-          textAlign: 'center',
-          fontSize: 12,
-          color: 'var(--ink-ghost)',
-          fontStyle: 'italic',
-          fontFamily: 'var(--font-body)',
-          marginBottom: 8,
-        }}>
-          "{artist.trackName}"
-        </div>
+        {/* ── About — bio is now secondary, below the tracks ─────── */}
+        {artist.fullBio && (
+          <>
+            <div className="expand-section-label" style={{ marginTop: 24 }}>About</div>
+            <p className="expand-bio">{artist.fullBio}</p>
+          </>
+        )}
       </div>
 
       {/* Bottom actions */}
       <div className="expand-actions">
-        <button className="btn btn-outline" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={onSkip}>
+        <button
+          className="btn btn-outline"
+          style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          onClick={onSkip}
+        >
           <IconSkip size={16} /> Skip
         </button>
         <button

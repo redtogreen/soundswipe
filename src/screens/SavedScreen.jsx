@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { IconNote, IconCircles, IconSkip } from '../components/Icons.jsx'
 import { isConfigured } from '../lib/spotify-auth.js'
+import { hasAmp } from '../lib/amplify-tracking.js'
 
 export default function SavedScreen({
   savedArtists,
@@ -189,6 +190,11 @@ export default function SavedScreen({
                     <IconNote size={11} style={{ verticalAlign: -1, marginRight: 5, display: 'inline-block' }} />
                     {artist.trackName}
                   </div>
+                  {hasAmp(artist.id, 'spotify_follow') && (
+                    <div className="saved-item-badges">
+                      <span className="saved-badge">Spotify ✓</span>
+                    </div>
+                  )}
                 </div>
                 <button
                   className="saved-item-menu"
