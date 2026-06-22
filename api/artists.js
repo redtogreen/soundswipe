@@ -178,7 +178,9 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!searchRes.ok) {
-      console.log('[spotify] search failed', { genreKey, status: searchRes.status })
+      let errorBody = ''
+      try { errorBody = await searchRes.text() } catch {}
+      console.log('[spotify] search failed', { genreKey, url: searchUrl, status: searchRes.status, body: errorBody })
       continue
     }
     const searchData = await searchRes.json()
