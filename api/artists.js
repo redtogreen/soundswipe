@@ -180,18 +180,26 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
       if (a.popularity >= maxPopularity) continue
       if (!a.images?.length) continue
 
-      // Fetch top track for preview URL
+      // Find a representative track via search (the /artists/{id}/top-tracks
+      // endpoint was deprecated by Spotify in Feb 2026).
       let track = null
       try {
+        const q = encodeURIComponent(`artist:"${a.name}"`)
         const trackRes = await fetch(
-          `https://api.spotify.com/v1/artists/${a.id}/top-tracks?market=US`,
+          `https://api.spotify.com/v1/search?q=${q}&type=track&limit=10&market=US`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         if (trackRes.ok) {
           const trackData = await trackRes.json()
-          const tracks = trackData.tracks || []
-          // Prefer tracks with preview_url (some Spotify tracks don't have one)
-          track = tracks.find((t) => t.preview_url) || tracks[0]
+          const tracks = trackData.tracks?.items || []
+          // Prefer tracks that are actually by this artist and have a preview
+          const byThisArtist = tracks.filter((t) =>
+            t.artists?.some((ar) => ar.id === a.id)
+          )
+          track = byThisArtist.find((t) => t.preview_url)
+                || byThisArtist[0]
+                || tracks.find((t) => t.preview_url)
+                || tracks[0]
         }
       } catch { /* skip */ }
       if (!track) continue
