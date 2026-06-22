@@ -59,6 +59,34 @@ async function lastfmGetInfo(artistName, apiKey) {
   return data.artist || null
 }
 
+// Apple's iTunes Search API returns 30-second preview MP3s, requires no
+// auth, no quota. Used because Spotify removed preview_url from their API
+// in Feb 2026.
+async function itunesFindPreview(artistName) {
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=song&limit=5&country=us`
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const data = await res.json()
+    const results = data.results || []
+    // Prefer an exact artist name match
+    const exact = results.find((t) =>
+      (t.artistName || '').toLowerCase() === artistName.toLowerCase() && t.previewUrl
+    )
+    const picked = exact || results.find((t) => t.previewUrl) || results[0]
+    if (!picked || !picked.previewUrl) return null
+    return {
+      previewUrl: picked.previewUrl,
+      trackName: picked.trackName,
+      itunesArtwork: picked.artworkUrl100
+        ? picked.artworkUrl100.replace('100x100', '600x600')
+        : null,
+    }
+  } catch {
+    return null
+  }
+}
+
 function pickImage(images) {
   if (!Array.isArray(images)) return null
   // Last.fm returns multiple image sizes; pick the largest non-empty one
@@ -108,6 +136,11 @@ async function recommendFromLastfm(seedArtists, limit, maxListeners, apiKey) {
     const tags = (info.tags?.tag || []).map((t) => t.name).slice(0, 5)
     const bioSummary = (info.bio?.summary || '').replace(/<a[^>]*>.*?<\/a>/g, '').replace(/\s+Read more.*$/, '').trim()
 
+    // Fetch a 30-second preview from Apple iTunes Search (Spotify killed
+    // preview_url in Feb 2026). Run these in parallel after the loop for
+    // speed — for now do it inline so we know to skip artists with no audio.
+    const itunes = await itunesFindPreview(name)
+
     results.push({
       id: `lastfm-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
       name,
@@ -115,12 +148,12 @@ async function recommendFromLastfm(seedArtists, limit, maxListeners, apiKey) {
       location: null,
       bio: bioSummary.slice(0, 200),
       fullBio: bioSummary,
-      photo: meta.image || pickImage(info.image) || null,
-      previewUrl: null, // client enriches via Spotify search (with user token)
+      photo: meta.image || pickImage(info.image) || itunes?.itunesArtwork || null,
+      previewUrl: itunes?.previewUrl || null,
       soundcloudUrl: null,
       spotifyUrl: null,
       spotifyTrackId: null,
-      trackName: null,
+      trackName: itunes?.trackName || null,
       followers: listeners,
       popularity: parseInt(info.stats?.playcount || '0', 10),
       tags,
