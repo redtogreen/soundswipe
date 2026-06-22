@@ -169,7 +169,10 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
 
   for (const genreKey of genres) {
     const spotifyGenre = GENRE_MAP[genreKey] || genreKey.replace(/-/g, ' ')
-    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(`genre:"${spotifyGenre}"`)}&type=artist&limit=50&market=US`
+    // Spotify removed the `genre:"..."` filter syntax in their 2026 API
+    // changes. Use plain-text genre search and match against each
+    // artist's own genres array instead.
+    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(spotifyGenre)}&type=artist&limit=50&market=US`
 
     const searchRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${token}` },
@@ -180,16 +183,25 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
     }
     const searchData = await searchRes.json()
     const artists = searchData.artists?.items || []
-    console.log('[spotify] search results', { genreKey, spotifyGenre, artistCount: artists.length, samplePopularity: artists.slice(0, 5).map(a => ({ name: a.name, pop: a.popularity, foll: a.followers?.total })) })
+    console.log('[spotify] search results', { genreKey, spotifyGenre, artistCount: artists.length, samplePopularity: artists.slice(0, 5).map(a => ({ name: a.name, pop: a.popularity, foll: a.followers?.total, genres: a.genres })) })
 
     let takenFromThisGenre = 0
+    let rejectedByGenre = 0
     let rejectedByFollowers = 0
     let rejectedByPopularity = 0
     let rejectedByImages = 0
 
+    const genreLower = spotifyGenre.toLowerCase()
+
     for (const a of artists) {
       if (seen.has(a.id)) continue
       seen.add(a.id)
+
+      // Confirm the artist actually belongs to this genre (text search may
+      // return false matches against artist name, etc.).
+      const artistGenres = (a.genres || []).map((g) => g.toLowerCase())
+      const matchesGenre = artistGenres.some((g) => g.includes(genreLower) || genreLower.includes(g))
+      if (!matchesGenre) { rejectedByGenre++; continue }
 
       // BOTH filters must pass: followers AND popularity
       if (a.followers?.total >= maxFollowers) { rejectedByFollowers++; continue }
@@ -242,7 +254,7 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
       if (takenFromThisGenre >= perGenreCap) break
       if (results.length >= limit) break
     }
-    console.log('[spotify] genre done', { genreKey, taken: takenFromThisGenre, rejectedByFollowers, rejectedByPopularity, rejectedByImages, totalResults: results.length })
+    console.log('[spotify] genre done', { genreKey, taken: takenFromThisGenre, rejectedByGenre, rejectedByFollowers, rejectedByPopularity, rejectedByImages, totalResults: results.length })
     if (results.length >= limit) break
   }
 
