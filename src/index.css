@@ -1835,5 +1835,274 @@ html, body {
 
 .amplify-keep-swiping:active { transform: scale(0.98); opacity: 0.9; }
 
+.amplify-see-rising {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--ink-light);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.amplify-see-rising:hover { color: var(--ink); }
+
+/* ─── Rising on SoundSwipe leaderboard ─────────────────────────────── */
+.rising-screen {
+  min-height: 100dvh;
+  background: var(--bg);
+  padding: 0 22px calc(40px + var(--safe-bottom));
+}
+
+.rising-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: calc(14px + var(--safe-top)) 0 6px;
+}
+
+.rising-back {
+  background: var(--bg-deep);
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rising-back:active { background: var(--border); }
+
+.rising-eyebrow {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+
+.rising-hero {
+  padding: 20px 0 22px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.rising-title {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -1.2px;
+  color: var(--ink);
+  margin: 0 0 12px;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.rising-subtitle {
+  font-size: 14px;
+  color: var(--ink-mid);
+  line-height: 1.55;
+  margin: 0 0 14px;
+  max-width: 88%;
+}
+
+.rising-week {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+.rising-loading,
+.rising-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--ink-mid);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.rising-empty strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.rising-empty code {
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.rising-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rising-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rising-rank {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  width: 30px;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+
+.rising-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-deep);
+}
+
+.rising-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-light);
+  font-size: 18px;
+}
+
+.rising-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rising-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rising-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-weight: 500;
+}
+
+.rising-stats span {
+  position: relative;
+}
+
+.rising-stats span:not(:last-child)::after {
+  content: '·';
+  position: absolute;
+  right: -7px;
+  color: var(--ink-ghost);
+}
+
+.rising-meta {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.rising-total {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.rising-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.rising-badge-new {
+  background: var(--accent-grad);
+  color: var(--accent-on);
+}
+
+.rising-badge-up { color: #2d7a4a; background: rgba(45, 122, 74, 0.08); }
+.rising-badge-down { color: #a04545; background: rgba(160, 69, 69, 0.08); }
+.rising-badge-same { color: var(--ink-ghost); }
+
+.rising-footer {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.rising-footer p {
+  font-size: 12px;
+  color: var(--ink-light);
+  font-style: italic;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 280px;
+  margin-inline: auto;
+}
+
+/* Saved screen → Rising link */
+.saved-rising-link {
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: var(--ink-mid);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border);
+}
+
+.saved-rising-link:hover { color: var(--ink); text-decoration-color: var(--ink); }
+
 /* ─── Scrollbar ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 0; background: transparent; }

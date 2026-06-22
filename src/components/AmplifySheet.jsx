@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { IconSkip, IconSave } from './Icons.jsx'
 import { followSpotifyArtist, InsufficientScopeError } from '../lib/spotify-api.js'
+import { postAmplify } from '../lib/amplify-tracking.js'
 
 const AMP_KEY = 'soundswipe_amplifications_v1'
 
@@ -11,14 +12,17 @@ function saveAmps(amps) {
   try { localStorage.setItem(AMP_KEY, JSON.stringify(amps)) } catch {}
 }
 
-function recordAmp(artistId, action) {
+function recordAmp(artist, action) {
+  // Local — for "have I amplified this artist?" checks.
   const amps = loadAmps()
-  const current = amps[artistId] || {}
-  amps[artistId] = { ...current, [action]: true, lastTouched: Date.now() }
+  const current = amps[artist.id] || {}
+  amps[artist.id] = { ...current, [action]: true, lastTouched: Date.now() }
   saveAmps(amps)
+  // Global — increments the Rising leaderboard. Fire-and-forget.
+  postAmplify(artist, action)
 }
 
-export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose, onError }) {
+export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose, onError, onSeeRising }) {
   const [spotifyState, setSpotifyState] = useState('idle')   // idle | loading | done | error
   const [appleClicked, setAppleClicked] = useState(false)
   const [shareClicked, setShareClicked] = useState(false)
@@ -39,7 +43,7 @@ export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose
     try {
       const result = await followSpotifyArtist(artist.name)
       if (result.ok) {
-        recordAmp(artist.id, 'spotify_follow')
+        recordAmp(artist, 'spotify_follow')
         setSpotifyState('done')
       } else {
         setSpotifyState('error')
@@ -57,7 +61,7 @@ export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose
   const handleAppleMusic = () => {
     const url = `https://music.apple.com/search?term=${encodeURIComponent(artist.name)}`
     window.open(url, '_blank', 'noopener,noreferrer')
-    recordAmp(artist.id, 'apple_music_open')
+    recordAmp(artist, 'apple_music_open')
     setAppleClicked(true)
   }
 
@@ -67,7 +71,7 @@ export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose
     if (navigator.share) {
       try {
         await navigator.share({ title: artist.name, text, url })
-        recordAmp(artist.id, 'share')
+        recordAmp(artist, 'share')
         setShareClicked(true)
       } catch {
         // user cancelled — don't record
@@ -76,7 +80,7 @@ export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose
       // fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(text)
-        recordAmp(artist.id, 'share')
+        recordAmp(artist, 'share')
         setShareClicked(true)
       } catch {}
     }
@@ -157,6 +161,12 @@ export default function AmplifySheet({ artist, spotifyConnected, onUndo, onClose
         <button className="amplify-keep-swiping" onClick={onClose}>
           Keep swiping →
         </button>
+
+        {onSeeRising && (
+          <button className="amplify-see-rising" onClick={onSeeRising}>
+            See where it counts — Rising on SoundSwipe ↗
+          </button>
+        )}
       </div>
     </div>
   )

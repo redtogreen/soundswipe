@@ -7,6 +7,7 @@ import GenreScreen from './screens/GenreScreen.jsx'
 import SwipeScreen from './screens/SwipeScreen.jsx'
 import ExpandScreen from './screens/ExpandScreen.jsx'
 import SavedScreen from './screens/SavedScreen.jsx'
+import RisingScreen from './screens/RisingScreen.jsx'
 import Toast from './components/Toast.jsx'
 import Manifesto from './components/Manifesto.jsx'
 import AmplifySheet from './components/AmplifySheet.jsx'
@@ -50,7 +51,14 @@ const initialBoards = persisted?.boards?.length
   : [DEFAULT_BOARD]
 
 export default function App() {
-  const [screen, setScreen] = useState('splash') // splash | connect-or-pick | top-artists | genre | swipe | expand | saved
+  // splash | connect-or-pick | top-artists | genre | swipe | expand | saved | rising
+  const [screen, setScreen] = useState(() => {
+    // Public deep-link: /rising loads the leaderboard without going through onboarding
+    if (typeof window !== 'undefined' && window.location.pathname === '/rising') {
+      return 'rising'
+    }
+    return 'splash'
+  })
   const [prevScreen, setPrevScreen] = useState(null)
 
   const [selectedGenres, setSelectedGenres] = useState(persisted?.selectedGenres || [])
@@ -360,6 +368,13 @@ export default function App() {
   const navigate = (to) => {
     setPrevScreen(screen)
     setScreen(to)
+    // Keep URL in sync for the public Rising page so it can be linked/shared.
+    if (typeof window !== 'undefined') {
+      const targetPath = to === 'rising' ? '/rising' : '/'
+      if (window.location.pathname !== targetPath) {
+        window.history.replaceState({}, '', targetPath)
+      }
+    }
   }
 
   // ── Splash → Connect-or-Pick (or straight to Top Artists if already connected) ──
@@ -577,6 +592,10 @@ export default function App() {
         />
       )}
 
+      {screen === 'rising' && (
+        <RisingScreen onBack={() => navigate(spotifyAuth?.accessToken ? 'saved' : 'splash')} />
+      )}
+
       {screen === 'saved' && (
         <SavedScreen
           savedArtists={savedArtists}
@@ -599,6 +618,7 @@ export default function App() {
           onCloseImport={handleCloseImport}
           onImportPlaylist={handleImportPlaylist}
           isImporting={isImporting}
+          onSeeRising={() => navigate('rising')}
         />
       )}
 
@@ -629,6 +649,10 @@ export default function App() {
             setAmplifyArtist(null)
           }}
           onClose={() => setAmplifyArtist(null)}
+          onSeeRising={() => {
+            setAmplifyArtist(null)
+            navigate('rising')
+          }}
           onError={(reason) => {
             if (reason === 'insufficient_scope') {
               showToast('Reconnect Spotify to enable follow')

@@ -23,6 +23,7 @@ export default function SavedScreen({
   onCloseImport,
   onImportPlaylist,
   isImporting,
+  onSeeRising,
 }) {
   const connected = Boolean(spotifyAuth?.accessToken)
   const canConnect = isConfigured()
@@ -61,6 +62,11 @@ export default function SavedScreen({
         <div className="eyebrow" style={{ marginBottom: 6 }}>Your private discoveries</div>
         <div className="display-lg">Your<br />Finds</div>
         <div className="rule-heavy" style={{ marginTop: 12 }} />
+        {onSeeRising && (
+          <button className="saved-rising-link" onClick={onSeeRising}>
+            See who's Rising on SoundSwipe ↗
+          </button>
+        )}
       </div>
 
       {/* Board tabs */}
