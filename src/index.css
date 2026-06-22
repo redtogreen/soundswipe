@@ -28,6 +28,7 @@
   /* Ink */
   --ink:          #1F1218;
   --ink-mid:      #5A5248;
+  --charcoal:     #1A1518;
   --ink-light:    #8A8278;
   --ink-ghost:    #A89F94;
 
@@ -1631,6 +1632,195 @@ html, body {
   line-height: 1.7;
   font-family: var(--font-body);
   margin-bottom: 14px;
+}
+
+/* ─── Splash v2 — brutalist wordmark, gradient bleed, charcoal CTA ─── */
+.splash-v2 {
+  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  color: var(--charcoal);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.splash-v2-status {
+  color: var(--charcoal);
+}
+
+.splash-v2-mark {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  padding-top: 12px;
+}
+
+.splash-v2-word {
+  position: absolute;
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 0.86;
+  letter-spacing: -7px;
+  color: var(--charcoal);
+  font-size: clamp(108px, 38vw, 160px);
+}
+
+.splash-v2-sound { top: 9%; left: -6px; }
+.splash-v2-swipe { top: 33%; left: 18px; }
+
+.splash-v2-footer {
+  padding: 0 22px calc(28px + var(--safe-bottom));
+}
+
+.splash-v2-tagline {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.22;
+  letter-spacing: -0.5px;
+  margin: 0 0 22px;
+  color: var(--charcoal);
+}
+
+.splash-v2-tagline em {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.splash-v2-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--charcoal);
+  color: #FAF4ED;
+  border: none;
+  padding: 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 52px;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.splash-v2-cta:active {
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+
+.splash-v2-micro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 4px;
+}
+
+.splash-v2-link,
+.splash-v2-reset {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 4px 2px;
+  transition: opacity 0.15s;
+}
+
+.splash-v2-link:hover,
+.splash-v2-reset:hover { opacity: 1; }
+
+.splash-v2-link { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ─── Loading screen between Top Artists / Genre → Swipe ─────────────── */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.loading-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px calc(60px + var(--safe-bottom));
+  gap: 36px;
+  text-align: center;
+}
+
+.loading-pulse {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.loading-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  opacity: 0;
+  animation: load-pulse 3.2s ease-out infinite;
+}
+
+.loading-ring-2 { animation-delay: 1.05s; }
+.loading-ring-3 { animation-delay: 2.1s; }
+
+@keyframes load-pulse {
+  0%   { transform: scale(0.3); opacity: 0.7; }
+  60%  { opacity: 0.18; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.loading-text {
+  max-width: 320px;
+}
+
+.loading-text .eyebrow {
+  margin-bottom: 12px;
+}
+
+.loading-phase {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 18px;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.loading-seeds {
+  font-size: 13px;
+  color: var(--ink-mid);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.loading-seeds strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.loading-and-more {
+  color: var(--ink-light);
+  font-weight: 500;
 }
 
 /* ─── Amplify sheet — the Forbes-worthy save → grow mechanic ────────── */
