@@ -156,6 +156,7 @@ async function getSpotifyToken(clientId, clientSecret) {
 }
 
 async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clientId, clientSecret) {
+  console.log('[spotify] fetchFromSpotify start', { genres, limit, maxFollowers, maxPopularity })
   const token = await getSpotifyToken(clientId, clientSecret)
   const results = []
   const seen = new Set()
@@ -173,20 +174,27 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
     const searchRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    if (!searchRes.ok) continue
+    if (!searchRes.ok) {
+      console.log('[spotify] search failed', { genreKey, status: searchRes.status })
+      continue
+    }
     const searchData = await searchRes.json()
     const artists = searchData.artists?.items || []
+    console.log('[spotify] search results', { genreKey, spotifyGenre, artistCount: artists.length, samplePopularity: artists.slice(0, 5).map(a => ({ name: a.name, pop: a.popularity, foll: a.followers?.total })) })
 
     let takenFromThisGenre = 0
+    let rejectedByFollowers = 0
+    let rejectedByPopularity = 0
+    let rejectedByImages = 0
 
     for (const a of artists) {
       if (seen.has(a.id)) continue
       seen.add(a.id)
 
       // BOTH filters must pass: followers AND popularity
-      if (a.followers?.total >= maxFollowers) continue
-      if (a.popularity >= maxPopularity) continue
-      if (!a.images?.length) continue
+      if (a.followers?.total >= maxFollowers) { rejectedByFollowers++; continue }
+      if (a.popularity >= maxPopularity) { rejectedByPopularity++; continue }
+      if (!a.images?.length) { rejectedByImages++; continue }
 
       // Find a representative track via search (the /artists/{id}/top-tracks
       // endpoint was deprecated by Spotify in Feb 2026).
@@ -234,9 +242,11 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
       if (takenFromThisGenre >= perGenreCap) break
       if (results.length >= limit) break
     }
+    console.log('[spotify] genre done', { genreKey, taken: takenFromThisGenre, rejectedByFollowers, rejectedByPopularity, rejectedByImages, totalResults: results.length })
     if (results.length >= limit) break
   }
 
+  console.log('[spotify] fetchFromSpotify done', { totalResults: results.length })
   return results
 }
 
