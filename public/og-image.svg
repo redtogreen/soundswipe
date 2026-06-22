@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAF4ED"/>
+      <stop offset="100%" stop-color="#F1E8DC"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F7C0CE"/>
+      <stop offset="100%" stop-color="#F2D78D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Masthead -->
+  <g font-family="DM Sans, Helvetica, Arial, sans-serif" font-weight="600">
+    <text x="80" y="100" font-size="22" fill="#5C3540" letter-spacing="2">SOUNDSWIPE</text>
+    <text x="1120" y="100" font-size="22" fill="#A67B81" text-anchor="end" letter-spacing="2">NO. 001</text>
+  </g>
+  <line x1="80" y1="120" x2="1120" y2="120" stroke="#E5D3D7" stroke-width="1"/>
+
+  <!-- Eyebrow -->
+  <text x="80" y="200" font-family="DM Sans, Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#8A6168" letter-spacing="3">
+    WHERE GREAT MUSIC FINDS ITS AUDIENCE
+  </text>
+
+  <!-- Main wordmark with gradient -->
+  <text x="80" y="320" font-family="DM Sans, Helvetica, Arial, sans-serif" font-size="140" font-weight="600" fill="#2A1820" letter-spacing="-6">
+    Sound
+  </text>
+  <text x="80" y="460" font-family="DM Sans, Helvetica, Arial, sans-serif" font-size="140" font-weight="600" fill="url(#accent)" letter-spacing="-6">
+    Swipe
+  </text>
+
+  <!-- Subtitle / hook -->
+  <text x="80" y="535" font-family="DM Sans, Helvetica, Arial, sans-serif" font-size="26" font-weight="500" fill="#5C3540" letter-spacing="-0.5">
+    Discover the artists who deserve to be next.
+  </text>
+  <text x="80" y="572" font-family="DM Sans, Helvetica, Arial, sans-serif" font-size="26" font-weight="500" fill="#5C3540" letter-spacing="-0.5">
+    Amplify them with one tap. Watch them rise.
+  </text>
+
+  <!-- Footer badge -->
+  <rect x="80" y="595" width="280" height="2" fill="url(#accent)"/>
+</svg>

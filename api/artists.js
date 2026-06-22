@@ -16,7 +16,7 @@
  *
  * Env vars required:
  *   LASTFM_API_KEY        - https://www.last.fm/api/account/create (free)
- *   LASTFM_MAX_LISTENERS  - optional, default 500000 (filters out mega-stars)
+ *   LASTFM_MAX_LISTENERS  - optional, default 5000000 (filters out only the biggest mega-stars; size is not the mission, taste-match is)
  */
 
 const MOCK_ARTISTS = [
@@ -179,7 +179,12 @@ export default async function handler(req, res) {
   const { seed = '', genre = '', limit = '20' } = req.query
   const seedArtists = seed ? seed.split(',').map((s) => s.trim()).filter(Boolean) : []
   const limitNum = Math.min(parseInt(limit, 10) || 20, 30)
-  const maxListeners = parseInt(process.env.LASTFM_MAX_LISTENERS || '500000', 10)
+  // Raised from 500K to 5M after the mission pivot — we no longer size-police
+  // discoveries. The job is to surface the artists that match your taste most
+  // precisely, regardless of how many people already know about them. The 5M
+  // ceiling exists only to filter out the absolute biggest pop stars where
+  // recommending them adds no discovery value.
+  const maxListeners = parseInt(process.env.LASTFM_MAX_LISTENERS || '5000000', 10)
 
   const apiKey = process.env.LASTFM_API_KEY
 

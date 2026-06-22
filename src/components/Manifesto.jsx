@@ -15,26 +15,26 @@ export default function Manifesto({ onClose }) {
         <div className="eyebrow" style={{ marginBottom: 14 }}>Why we built this</div>
 
         <h1 className="manifesto-title">
-          We're for music.<br />
-          <span className="splash-accent">They're for metrics.</span>
+          Algorithms recommend.<br />
+          <span className="splash-accent">We introduce.</span>
         </h1>
 
         <div className="rule-heavy" style={{ margin: '16px 0 18px' }} />
 
         <p className="manifesto-body">
-          Streaming platforms optimize for one thing: keeping you on the platform. Their algorithms reward what's already winning — pushing platinum to platinum while genuinely brilliant music never reaches anyone.
+          Streaming runs on momentum. Already winning? You'll keep winning. Just starting out? Good luck breaking through. The artist whose sound matches yours most precisely may be three feet from your headphones — and there's no algorithm built to introduce you.
         </p>
 
         <p className="manifesto-body">
-          The most original songs being made right now are happening in basements, bedrooms, and barns — by artists with 500 followers whose ideas your favorite artist will probably copy in three years.
+          SoundSwipe finds artists whose sound aligns with yours by looking at what fans of your favorites actually listen to — not just the genre tag. Then it makes amplifying them effortless: one tap to follow on Spotify, one tap to open on Apple Music, one tap to share with a friend who needs to hear it.
         </p>
 
         <p className="manifesto-body">
-          We built SoundSwipe for them. And for listeners who'd rather find something nobody else has heard than play the same Top 40 again.
+          Every week we publish the artists this community is helping rise. That leaderboard is real signal — the kind that turns 800 monthly listeners into 80,000 because a group of people got there first.
         </p>
 
         <p className="manifesto-body" style={{ fontWeight: 600, color: 'var(--ink)' }}>
-          We're not against streaming. We're against algorithms deciding for you.
+          Streaming taught the world to listen. SoundSwipe is teaching it to discover.
         </p>
 
         <button className="btn btn-ink" onClick={onClose} style={{ marginTop: 20 }}>
