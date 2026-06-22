@@ -172,7 +172,7 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
     // Spotify removed the `genre:"..."` filter syntax in their 2026 API
     // changes. Use plain-text genre search and match against each
     // artist's own genres array instead.
-    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(spotifyGenre)}&type=artist&limit=20&market=US`
+    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(spotifyGenre)}&type=artist`
 
     const searchRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${token}` },
@@ -216,7 +216,7 @@ async function fetchFromSpotify(genres, limit, maxFollowers, maxPopularity, clie
       try {
         const q = encodeURIComponent(`artist:"${a.name}"`)
         const trackRes = await fetch(
-          `https://api.spotify.com/v1/search?q=${q}&type=track&limit=5&market=US`,
+          `https://api.spotify.com/v1/search?q=${q}&type=track`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         if (trackRes.ok) {
