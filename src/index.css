@@ -1903,6 +1903,378 @@ html, body {
 
 .splash-v2-link { text-decoration: underline; text-underline-offset: 3px; }
 
+/* ─── Splash v3 — video plays through SOUND/SWIPE text mask ─────────── */
+/* Three stacked layers:
+   1. .splash-v3-video — the "video" (a CSS keyframe montage as placeholder;
+      swap for a real <video autoplay loop muted playsinline> later).
+   2. .splash-v3-mask-svg — gradient rectangle with the wordmark cut out.
+      The cutout reveals the video below.
+   3. .splash-v3-status / .splash-v3-footer — foreground UI on top of both. */
+
+.splash-v3 {
+  position: relative;
+  min-height: 100dvh;
+  background: #1A1518;
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+.splash-v3-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  animation: splash-v3-cycle 7.5s step-end infinite;
+}
+
+@keyframes splash-v3-cycle {
+  0% {
+    background:
+      radial-gradient(circle at 25% 30%, rgba(247,192,206,0.55) 0%, transparent 35%),
+      radial-gradient(circle at 75% 60%, rgba(242,215,141,0.45) 0%, transparent 40%),
+      linear-gradient(160deg, #2A1820 0%, #0F0A0E 100%);
+  }
+  14% {
+    background:
+      radial-gradient(circle at 60% 40%, rgba(255,140,90,0.6) 0%, transparent 45%),
+      linear-gradient(180deg, #4A1E14 0%, #1A0C0A 100%);
+  }
+  28% {
+    background:
+      radial-gradient(circle at 30% 70%, rgba(247,192,206,0.7) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(180,150,200,0.5) 0%, transparent 40%),
+      linear-gradient(135deg, #1A0E2A 0%, #0A0815 100%);
+  }
+  42% {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0%, transparent 30%),
+      repeating-linear-gradient(45deg, #1A1518 0px, #1A1518 8px, #2A1820 8px, #2A1820 16px);
+  }
+  56% {
+    background:
+      radial-gradient(circle at 20% 60%, rgba(242,215,141,0.65) 0%, transparent 45%),
+      radial-gradient(circle at 70% 30%, rgba(247,192,206,0.5) 0%, transparent 35%),
+      linear-gradient(45deg, #5C3540 0%, #1A1518 100%);
+  }
+  70% {
+    background:
+      radial-gradient(circle at 40% 40%, rgba(150,200,255,0.5) 0%, transparent 40%),
+      linear-gradient(220deg, #0A1A2A 0%, #0F0A18 100%);
+  }
+  84% {
+    background:
+      radial-gradient(circle at 60% 50%, rgba(255,220,180,0.65) 0%, transparent 50%),
+      linear-gradient(180deg, #3A1F18 0%, #1A0F0A 100%);
+  }
+  100% {
+    background:
+      radial-gradient(circle at 25% 30%, rgba(247,192,206,0.55) 0%, transparent 35%),
+      radial-gradient(circle at 75% 60%, rgba(242,215,141,0.45) 0%, transparent 40%),
+      linear-gradient(160deg, #2A1820 0%, #0F0A0E 100%);
+  }
+}
+
+/* Subtle film grain on the video layer */
+.splash-v3-video::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 200px 200px;
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.splash-v3-mask-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+}
+
+.splash-v3-status {
+  position: absolute;
+  top: calc(14px + var(--safe-top));
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(26, 21, 24, 0.55);
+  z-index: 5;
+}
+
+.splash-v3-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 0 22px calc(26px + var(--safe-bottom));
+  z-index: 5;
+}
+
+.splash-v3-tagline {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.22;
+  letter-spacing: -0.5px;
+  color: var(--charcoal);
+  margin: 0 0 20px;
+}
+
+.splash-v3-tagline em {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.splash-v3-micro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 0 4px;
+}
+
+.splash-v3-link,
+.splash-v3-reset {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 4px 2px;
+  transition: opacity 0.15s;
+}
+
+.splash-v3-link:hover,
+.splash-v3-reset:hover { opacity: 1; }
+
+.splash-v3-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── Top Artists v2 — splash-language match ────────────────────────── */
+.ta-screen {
+  position: relative;
+  min-height: 100dvh;
+  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.ta-status {
+  padding: calc(14px + var(--safe-top)) 0 0;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(26, 21, 24, 0.55);
+}
+
+.ta-mast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  color: var(--charcoal);
+}
+
+.ta-back {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--charcoal);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.ta-mast-logo {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.ta-mast-spacer { width: 40px; }
+
+.ta-header {
+  padding: 20px 22px 18px;
+}
+
+.ta-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(26, 21, 24, 0.65);
+  margin-bottom: 6px;
+}
+
+.ta-display {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 16vw, 76px);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -2.5px;
+  color: var(--charcoal);
+  margin: 0 0 16px;
+}
+
+.ta-grad {
+  background: linear-gradient(90deg, #1A1518, #5C3540);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ta-instr {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(26, 21, 24, 0.75);
+  margin: 0;
+  max-width: 280px;
+}
+
+/* Grid — 2 columns for visual weight */
+.ta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 4px 22px 110px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ta-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.ta-tile:active { transform: scale(0.97); }
+
+.ta-tile-photo {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: rgba(26, 21, 24, 0.12);
+  background-size: cover;
+  background-position: center;
+  border-radius: 0;
+  margin-bottom: 8px;
+  transition: filter 0.2s;
+}
+
+.ta-tile-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--charcoal);
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+  padding-right: 22px;
+}
+
+.ta-tile-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--charcoal);
+  color: #FAF4ED;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ta-tile-excluded .ta-tile-photo {
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.5;
+}
+
+.ta-tile-excluded .ta-tile-name {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* Sticky footer CTA */
+.ta-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 22px calc(20px + var(--safe-bottom));
+  background: linear-gradient(to top, #F2D78D 60%, rgba(242, 215, 141, 0));
+  z-index: 5;
+}
+
+.ta-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 28px;
+  gap: 12px;
+}
+
+.ta-empty h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  margin: 0;
+  color: var(--charcoal);
+}
+
+.ta-empty p {
+  font-size: 13px;
+  color: rgba(26, 21, 24, 0.7);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 280px;
+}
+
+.ta-empty-pulse {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F7C0CE, #F2D78D);
+  border: 2px solid var(--charcoal);
+  animation: ta-empty-pulse 2.4s ease-in-out infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes ta-empty-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.08); opacity: 1; }
+}
+
 /* ─── Loading screen: scroll-track fly-through ──────────────────────── */
 /* A single continuous CSS 3D camera move forward through:
    1. A 3×3 photo wall (focus tile centered on screen)

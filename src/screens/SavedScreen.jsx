@@ -25,7 +25,21 @@ export default function SavedScreen({
   onImportPlaylist,
   isImporting,
   onSeeRising,
+  appleAuth,
+  appleConfigured,
+  onConnectAppleMusic,
+  onDisconnectAppleMusic,
+  youtubeAuth,
+  youtubeConfigured,
+  onConnectYouTube,
+  onDisconnectYouTube,
 }) {
+  const appleConnected = Boolean(appleAuth?.authorized) && appleConfigured
+  const youtubeConnected =
+    Boolean(youtubeAuth?.accessToken) &&
+    youtubeAuth?.expiresAt &&
+    Date.now() < youtubeAuth.expiresAt &&
+    youtubeConfigured
   const connected = Boolean(spotifyAuth?.accessToken)
   const canConnect = isConfigured()
   const currentBoard = boards.find((b) => b.id === currentBoardId) || boards[0]
@@ -119,6 +133,56 @@ export default function SavedScreen({
         </div>
       )}
 
+      {/* Apple Music connect strip (only rendered when env vars configured) */}
+      {appleConfigured && (
+        <div className="spotify-connect">
+          {appleConnected ? (
+            <>
+              <div className="spotify-connect-info">
+                <div>
+                  <div className="spotify-connect-label">Connected to Apple Music</div>
+                  <div className="spotify-connect-name">Auto-adding to your library</div>
+                </div>
+              </div>
+              <button className="spotify-connect-secondary" onClick={onDisconnectAppleMusic}>Disconnect</button>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="spotify-connect-label">Cross-platform reach</div>
+                <div className="spotify-connect-name">Connect Apple Music to auto-add saves</div>
+              </div>
+              <button className="spotify-connect-btn" onClick={onConnectAppleMusic}>Connect →</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* YouTube connect strip (only rendered when env vars configured) */}
+      {youtubeConfigured && (
+        <div className="spotify-connect">
+          {youtubeConnected ? (
+            <>
+              <div className="spotify-connect-info">
+                <div>
+                  <div className="spotify-connect-label">Connected to YouTube</div>
+                  <div className="spotify-connect-name">Auto-subscribing to artist channels</div>
+                </div>
+              </div>
+              <button className="spotify-connect-secondary" onClick={onDisconnectYouTube}>Disconnect</button>
+            </>
+          ) : (
+            <>
+              <div>
+                <div className="spotify-connect-label">Reach the YouTube algorithm</div>
+                <div className="spotify-connect-name">Connect YouTube to auto-subscribe</div>
+              </div>
+              <button className="spotify-connect-btn" onClick={onConnectYouTube}>Connect →</button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Import + sync row (when connected) */}
       {connected && (
         <div className="board-actions">
@@ -190,9 +254,19 @@ export default function SavedScreen({
                     <IconNote size={11} style={{ verticalAlign: -1, marginRight: 5, display: 'inline-block' }} />
                     {artist.trackName}
                   </div>
-                  {hasAmp(artist.id, 'spotify_follow') && (
+                  {(hasAmp(artist.id, 'spotify_follow') ||
+                    hasAmp(artist.id, 'apple_music_add') ||
+                    hasAmp(artist.id, 'youtube_subscribe')) && (
                     <div className="saved-item-badges">
-                      <span className="saved-badge">Spotify ✓</span>
+                      {hasAmp(artist.id, 'spotify_follow') && (
+                        <span className="saved-badge">Spotify ✓</span>
+                      )}
+                      {hasAmp(artist.id, 'apple_music_add') && (
+                        <span className="saved-badge">Apple ✓</span>
+                      )}
+                      {hasAmp(artist.id, 'youtube_subscribe') && (
+                        <span className="saved-badge">YouTube ✓</span>
+                      )}
                     </div>
                   )}
                 </div>

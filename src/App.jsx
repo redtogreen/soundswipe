@@ -16,6 +16,22 @@ import { IconSave } from './components/Icons.jsx'
 import { beginAuth, handleRedirect, getStoredAuth, clearAuth } from './lib/spotify-auth.js'
 import { createPlaylistFromFinds, syncPlaylist, getMyPlaylists, getPlaylistTracks, enrichWithSpotify, followSpotifyArtist, InsufficientScopeError } from './lib/spotify-api.js'
 import { recordAmp, recordAmpLocal, postAmplify } from './lib/amplify-tracking.js'
+import {
+  isAppleMusicConfigured,
+  authorizeAppleMusic,
+  getStoredAppleAuth,
+  clearAppleAuth,
+  addAppleArtistToLibrary,
+} from './lib/apple-music-auth.js'
+import {
+  isYouTubeConfigured,
+  authorizeYouTube,
+  getStoredYouTubeAuth,
+  clearYouTubeAuth,
+  isYouTubeAuthValid,
+  subscribeToArtistChannel,
+} from './lib/youtube-auth.js'
+import { initAnalytics, Events as Analytics } from './lib/analytics.js'
 
 // Filter artists by selected genres. Falls back to all artists if no match.
 function filterArtists(artists, selectedGenres) {
@@ -185,6 +201,12 @@ export default function App() {
 
   // Spotify auth state (localStorage-backed; prototype)
   const [spotifyAuth, setSpotifyAuth] = useState(() => getStoredAuth())
+  // Apple Music + YouTube auth state — gated on env vars being configured.
+  const [appleAuth, setAppleAuth] = useState(() => getStoredAppleAuth())
+  const [youtubeAuth, setYoutubeAuth] = useState(() => getStoredYouTubeAuth())
+
+  // Initialize analytics once on mount. No-op if VITE_POSTHOG_KEY isn't set.
+  useEffect(() => { initAnalytics() }, [])
 
   // Persist core state to localStorage whenever it changes
   useEffect(() => {
@@ -474,6 +496,7 @@ export default function App() {
 
   // ── Splash → Connect-or-Pick (or straight to Top Artists if already connected) ──
   const handleSplashStart = () => {
+    Analytics.splash_start({ has_spotify: Boolean(spotifyAuth?.accessToken) })
     if (spotifyAuth?.accessToken) navigate('top-artists')
     else navigate('connect-or-pick')
   }
@@ -563,9 +586,10 @@ export default function App() {
   }
 
   // ── Swipe actions ──────────────────────────────────────────────────
-  // Saving an artist also auto-follows them on every connected service.
-  // The user shouldn't have to confirm a follow they've already opted into
-  // by connecting Spotify (and later Apple Music, YouTube) during onboarding.
+  // Saving an artist auto-follows them on every connected service. The user
+  // already opted in by connecting Spotify / Apple Music / YouTube during
+  // onboarding, so no per-save confirmation needed. We fan out in parallel
+  // and update the toast with the combined result.
   const handleSave = useCallback((artist) => {
     const tagged = { ...artist, boardId: DEFAULT_BOARD.id }
     setSavedArtists((prev) => {
@@ -574,47 +598,133 @@ export default function App() {
     })
     triggerSaveBurst()
     setLastSwipe({ artist: tagged, action: 'save' })
+    Analytics.swipe_save({ artist: artist.name })
 
-    // Surface an immediate toast that promises the follow is in progress
-    // (so the user keeps swiping without waiting for the API roundtrip).
-    if (spotifyAuth?.accessToken) {
-      showSaveToast(tagged, 'Following on Spotify…')
-      followSpotifyArtist(artist.name)
-        .then((result) => {
-          if (result.ok) {
+    // Build the list of services the user has connected.
+    const services = []
+    if (spotifyAuth?.accessToken) services.push('spotify')
+    if (appleAuth?.authorized && isAppleMusicConfigured()) services.push('apple')
+    if (isYouTubeAuthValid(youtubeAuth)) services.push('youtube')
+
+    if (services.length === 0) {
+      showSaveToast(tagged, 'Connect a music service to auto-follow')
+      return
+    }
+
+    showSaveToast(tagged, `Following on ${formatServiceList(services)}…`)
+
+    // Kick off all follows in parallel — never block one on another.
+    const followCalls = services.map(async (service) => {
+      try {
+        if (service === 'spotify') {
+          const r = await followSpotifyArtist(artist.name)
+          if (r.ok) {
             recordAmpLocal(tagged.id, 'spotify_follow')
             postAmplify(tagged, 'spotify_follow')
-            // Update the toast in place — only if THIS save's toast is still up.
-            setToast((prev) =>
-              prev.visible && prev.message === `Saved ${tagged.name}`
-                ? { ...prev, status: 'Followed on Spotify ✓' }
-                : prev
-            )
-          } else {
-            setToast((prev) =>
-              prev.visible && prev.message === `Saved ${tagged.name}`
-                ? { ...prev, status: 'Couldn’t follow on Spotify' }
-                : prev
-            )
+            Analytics.amplify_spotify_follow({ artist: artist.name })
           }
-        })
-        .catch((err) => {
-          const status = err instanceof InsufficientScopeError
-            ? 'Reconnect Spotify to enable follow'
-            : 'Couldn’t follow on Spotify'
-          setToast((prev) =>
-            prev.visible && prev.message === `Saved ${tagged.name}`
-              ? { ...prev, status }
-              : prev
-          )
-        })
-    } else {
-      showSaveToast(tagged, 'Connect Spotify to auto-follow')
+          return { service, ok: r.ok }
+        }
+        if (service === 'apple') {
+          const r = await addAppleArtistToLibrary(artist.name)
+          if (r.ok) {
+            recordAmpLocal(tagged.id, 'apple_music_add')
+            postAmplify(tagged, 'apple_music_open')
+            Analytics.amplify_apple_add({ artist: artist.name })
+          }
+          return { service, ok: r.ok }
+        }
+        if (service === 'youtube') {
+          const r = await subscribeToArtistChannel(artist.name)
+          if (r.ok) {
+            recordAmpLocal(tagged.id, 'youtube_subscribe')
+            postAmplify(tagged, 'youtube_subscribe')
+            Analytics.amplify_youtube_sub({ artist: artist.name })
+          }
+          return { service, ok: r.ok }
+        }
+        return { service, ok: false }
+      } catch (err) {
+        if (err instanceof InsufficientScopeError) {
+          return { service, ok: false, reason: 'insufficient_scope' }
+        }
+        return { service, ok: false, reason: err?.message }
+      }
+    })
+
+    Promise.allSettled(followCalls).then((results) => {
+      const succeeded = results
+        .map((r) => r.value)
+        .filter((r) => r?.ok)
+        .map((r) => r.service)
+
+      let status
+      if (succeeded.length === services.length) {
+        status = `Followed on ${formatServiceList(succeeded)} ✓`
+      } else if (succeeded.length === 0) {
+        status = 'Couldn’t follow — try again from Saved'
+      } else {
+        status = `Followed on ${formatServiceList(succeeded)} · partial`
+      }
+
+      setToast((prev) =>
+        prev.visible && prev.message === `Saved ${tagged.name}`
+          ? { ...prev, status }
+          : prev
+      )
+    })
+  }, [screen, spotifyAuth, appleAuth, youtubeAuth])
+
+  // Friendly service-name formatter for status lines.
+  const formatServiceList = (services) => {
+    const names = services.map((s) => ({
+      spotify: 'Spotify',
+      apple: 'Apple Music',
+      youtube: 'YouTube',
+    }[s] || s))
+    if (names.length === 1) return names[0]
+    if (names.length === 2) return `${names[0]} + ${names[1]}`
+    return `${names.slice(0, -1).join(', ')} + ${names.slice(-1)}`
+  }
+
+  // Connect / disconnect handlers for the new services
+  const handleConnectAppleMusic = async () => {
+    try {
+      const auth = await authorizeAppleMusic()
+      setAppleAuth(auth)
+      Analytics.apple_connect({})
+      showToast('Connected to Apple Music')
+    } catch (err) {
+      showToast(err?.message || 'Couldn’t connect to Apple Music')
     }
-  }, [screen, spotifyAuth])
+  }
+
+  const handleDisconnectAppleMusic = async () => {
+    await clearAppleAuth()
+    setAppleAuth(null)
+    showToast('Disconnected from Apple Music')
+  }
+
+  const handleConnectYouTube = async () => {
+    try {
+      const auth = await authorizeYouTube()
+      setYoutubeAuth(auth)
+      Analytics.youtube_connect({})
+      showToast('Connected to YouTube')
+    } catch (err) {
+      showToast(err?.message || 'Couldn’t connect to YouTube')
+    }
+  }
+
+  const handleDisconnectYouTube = () => {
+    clearYouTubeAuth()
+    setYoutubeAuth(null)
+    showToast('Disconnected from YouTube')
+  }
 
   const handlePass = useCallback((artist) => {
     setLastSwipe({ artist, action: 'pass' })
+    Analytics.swipe_pass({ artist: artist.name })
     showUndoToast(`Skipped ${artist.name}`)
   }, [])
 
@@ -772,6 +882,14 @@ export default function App() {
           spotifyAuth={spotifyAuth}
           onConnectSpotify={handleConnectSpotify}
           onDisconnectSpotify={handleDisconnectSpotify}
+          appleAuth={appleAuth}
+          appleConfigured={isAppleMusicConfigured()}
+          onConnectAppleMusic={handleConnectAppleMusic}
+          onDisconnectAppleMusic={handleDisconnectAppleMusic}
+          youtubeAuth={youtubeAuth}
+          youtubeConfigured={isYouTubeConfigured()}
+          onConnectYouTube={handleConnectYouTube}
+          onDisconnectYouTube={handleDisconnectYouTube}
           onExportPlaylist={handleExportPlaylist}
           isExporting={isExporting}
           onOpenImport={handleOpenImport}

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getTopArtists, InsufficientScopeError } from '../lib/spotify-api.js'
-import { IconCircles } from '../components/Icons.jsx'
 
 export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBack }) {
   const [artists, setArtists] = useState(null)  // null = loading, [] = empty, [...] = loaded
@@ -42,9 +41,8 @@ export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBac
 
   const handleStart = () => {
     if (selectedArtists.length === 0) return
-    // Build a WEIGHTED genre map — how many seed artists share each genre.
-    // Then take the top genres in order so the swipe queue mirrors the
-    // user's actual taste distribution, not a flat dedup.
+    // Weighted-genre map: how many seed artists share each genre. Top genres
+    // become the seed for the swipe queue.
     const weights = {}
     for (const artist of selectedArtists) {
       for (const g of artist.genres || []) {
@@ -60,94 +58,84 @@ export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBac
   }
 
   return (
-    <div className="screen genre-screen">
-      <div className="status-bar">
-        <span className="status-bar-time">9:41</span>
+    <div className="screen ta-screen">
+      <div className="ta-status">9:41</div>
+
+      <div className="ta-mast">
+        <button className="ta-back" onClick={onBack}>← Back</button>
+        <span className="ta-mast-logo">SoundSwipe</span>
+        <span className="ta-mast-spacer" />
       </div>
 
-      <div className="masthead">
-        <button className="masthead-btn" onClick={onBack}>← Back</button>
-        <span className="masthead-logo">SoundSwipe</span>
-        <span className="masthead-label">Section B</span>
-      </div>
-
-      <div className="genre-header">
-        <div className="eyebrow" style={{ marginBottom: 6 }}>Pulled from your Spotify</div>
-        <div className="display-lg" style={{ marginBottom: 10 }}>
-          Your top<br />artists
-        </div>
-        <div className="rule-heavy" />
-        <p style={{
-          marginTop: 12, fontSize: 13, color: 'var(--ink-mid)',
-          lineHeight: 1.5, fontFamily: 'var(--font-body)',
-        }}>
-          We'll find emerging artists who sound like these. Tap any to exclude it from your seed.
+      <div className="ta-header">
+        <div className="ta-eyebrow">Pulled from your Spotify</div>
+        <h1 className="ta-display">
+          Your top<br />
+          <span className="ta-grad">artists.</span>
+        </h1>
+        <p className="ta-instr">
+          We'll find emerging artists who sound like these. Tap to exclude any you don't want as a seed.
         </p>
       </div>
 
       {artists === null && (
-        <div className="empty-state" style={{ flex: 1 }}>
-          <div className="empty-icon"><IconCircles size={64} /></div>
+        <div className="ta-empty">
+          <div className="ta-empty-pulse" aria-hidden="true" />
           <h3>Reading your library…</h3>
           <p>Asking Spotify for your top artists.</p>
         </div>
       )}
 
       {artists !== null && artists.length === 0 && (
-        <div className="empty-state" style={{ flex: 1 }}>
-          <div className="empty-icon"><IconCircles size={64} /></div>
-          <h3>{loadError ? 'Hmm, that didn’t work' : 'No top artists yet'}</h3>
+        <div className="ta-empty">
+          <h3>{loadError ? "Hmm, that didn't work" : 'No top artists yet'}</h3>
           <p>
             {loadError
               ? loadError
               : 'Spotify needs about 4 weeks of listening history before it can tell us your top artists. Try the manual route instead.'}
           </p>
-          <button
-            className="btn btn-outline"
-            onClick={onPickGenres}
-            style={{ marginTop: 8, width: 'auto', padding: '12px 24px' }}
-          >
+          <button className="btn btn-outline" onClick={onPickGenres} style={{ width: 'auto', padding: '12px 24px', marginTop: 12 }}>
             Pick genres instead →
           </button>
         </div>
       )}
 
       {artists !== null && artists.length > 0 && (
-        <div className="top-artists-grid">
-          {artists.map((a) => {
-            const isExcluded = excluded.has(a.id)
-            return (
-              <button
-                key={a.id}
-                className={`top-artist-tile ${isExcluded ? 'excluded' : ''}`}
-                onClick={() => toggle(a.id)}
-                aria-pressed={!isExcluded}
-              >
-                <div
-                  className="top-artist-photo"
-                  style={{ backgroundImage: a.image ? `url(${a.image})` : 'none' }}
+        <>
+          <div className="ta-grid">
+            {artists.map((a) => {
+              const isExcluded = excluded.has(a.id)
+              return (
+                <button
+                  key={a.id}
+                  className={`ta-tile ${isExcluded ? 'ta-tile-excluded' : ''}`}
+                  onClick={() => toggle(a.id)}
+                  aria-pressed={!isExcluded}
                 >
-                  {!isExcluded && <span className="top-artist-check">✓</span>}
-                </div>
-                <div className="top-artist-name">{a.name}</div>
-              </button>
-            )
-          })}
-          <div style={{ height: 8 }} />
-        </div>
-      )}
+                  <div
+                    className="ta-tile-photo"
+                    style={a.image ? { backgroundImage: `url(${a.image})` } : undefined}
+                  />
+                  <div className="ta-tile-name">{a.name}</div>
+                  {!isExcluded && (
+                    <span className="ta-tile-check" aria-hidden="true">✓</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
 
-      {artists !== null && artists.length > 0 && (
-        <div className="genre-footer">
-          <button
-            className="btn btn-ink"
-            onClick={handleStart}
-            disabled={selectedArtists.length === 0}
-            style={{ opacity: selectedArtists.length === 0 ? 0.35 : 1, transition: 'opacity 0.2s' }}
-          >
-            Start listening · {selectedArtists.length} {selectedArtists.length === 1 ? 'artist' : 'artists'} →
-          </button>
-        </div>
+          <div className="ta-footer">
+            <button
+              className="btn btn-ink"
+              onClick={handleStart}
+              disabled={selectedArtists.length === 0}
+              style={{ opacity: selectedArtists.length === 0 ? 0.35 : 1 }}
+            >
+              Start listening · {selectedArtists.length} {selectedArtists.length === 1 ? 'artist' : 'artists'} →
+            </button>
+          </div>
+        </>
       )}
     </div>
   )
