@@ -17,7 +17,7 @@ export default function SplashScreen({ onStart, onOpenManifesto, onReset }) {
           The music<br />the algorithms <em>missed.</em>
         </p>
 
-        <button className="splash-v2-cta" onClick={onStart}>
+        <button className="btn btn-ink" onClick={onStart}>
           Start listening →
         </button>
 

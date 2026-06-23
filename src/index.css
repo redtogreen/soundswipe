@@ -237,7 +237,7 @@ html, body {
   background: transparent;
   color: var(--ink);
   border: 1.5px solid var(--border-dark);
-  border-radius: var(--radius);
+  border-radius: 0;
   padding: 14px 24px;
   width: 100%;
   font-size: 14px;
@@ -246,7 +246,7 @@ html, body {
 .btn-amber {
   background: var(--accent-grad);
   color: var(--accent-on);
-  border-radius: var(--radius);
+  border-radius: 0;
   padding: 14px 24px;
   width: 100%;
   font-size: 14px;
@@ -1285,7 +1285,7 @@ html, body {
   background: var(--accent-grad);
   color: var(--accent-on);
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 6px 12px;
   font-family: var(--font-body);
   font-size: 12px;
@@ -1335,7 +1335,7 @@ html, body {
   background: transparent;
   color: var(--bg);
   border: 1px solid rgba(250, 244, 237, 0.35);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 6px 10px;
   font-family: var(--font-body);
   font-size: 12px;
@@ -1438,7 +1438,7 @@ html, body {
   background: var(--accent-grad);
   color: var(--accent-on);
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 8px 14px;
   font-family: var(--font-body);
   font-size: 12px;
@@ -1597,7 +1597,7 @@ html, body {
   background: var(--bg-card);
   color: var(--ink);
   border: 1px solid var(--border-dark);
-  border-radius: var(--radius);
+  border-radius: 0;
   padding: 12px 14px;
   font-family: var(--font-body);
   font-size: 12px;
@@ -1872,32 +1872,6 @@ html, body {
 .splash-v2-tagline em {
   font-style: italic;
   font-weight: 500;
-}
-
-.splash-v2-cta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  background: var(--charcoal);
-  color: #FAF4ED;
-  border: none;
-  padding: 18px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  border-radius: 999px;
-  cursor: pointer;
-  min-height: 52px;
-  transition: transform 0.15s, opacity 0.15s;
-}
-
-.splash-v2-cta:active {
-  transform: scale(0.98);
-  opacity: 0.92;
 }
 
 .splash-v2-micro {
@@ -2360,7 +2334,7 @@ html, body {
   padding: 14px 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 0;
   cursor: pointer;
   text-align: left;
   transition: background 0.15s, transform 0.1s, border-color 0.15s;
