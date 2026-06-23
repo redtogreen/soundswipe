@@ -484,12 +484,25 @@ export default function App() {
   // Seed artists currently being matched against (for loading screen display)
   const [loadingSeeds, setLoadingSeeds] = useState([])
 
+  // Minimum time we hold the loading screen so the fly-through animation
+  // completes even if the API is fast. 9s matches the camera animation.
+  const MIN_LOADING_MS = 9000
+
+  async function holdAtLeast(startedAt) {
+    const elapsed = Date.now() - startedAt
+    if (elapsed < MIN_LOADING_MS) {
+      await new Promise((r) => setTimeout(r, MIN_LOADING_MS - elapsed))
+    }
+  }
+
   // Top-artists confirmation → seed Last.fm similar-artist search
   const handleTopArtistsConfirm = async (derivedGenres, seedArtists) => {
     setSelectedGenres(derivedGenres)
     setLoadingSeeds(seedArtists || [])
     navigate('loading')
+    const startedAt = Date.now()
     const artists = await fetchArtists({ seedArtists, genres: derivedGenres })
+    await holdAtLeast(startedAt)
     setQueue(artists)
     navigate('swipe')
   }
@@ -510,13 +523,14 @@ export default function App() {
     )
   }
 
-  const handleGenreConfirm = () => {
+  const handleGenreConfirm = async () => {
     setLoadingSeeds([])
     navigate('loading')
-    fetchArtists({ genres: selectedGenres }).then((artists) => {
-      setQueue(artists)
-      navigate('swipe')
-    })
+    const startedAt = Date.now()
+    const artists = await fetchArtists({ genres: selectedGenres })
+    await holdAtLeast(startedAt)
+    setQueue(artists)
+    navigate('swipe')
   }
 
   // ── API fetch ──────────────────────────────────────────────────────

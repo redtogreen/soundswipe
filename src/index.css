@@ -1929,85 +1929,305 @@ html, body {
 
 .splash-v2-link { text-decoration: underline; text-underline-offset: 3px; }
 
-/* ─── Loading screen between Top Artists / Genre → Swipe ─────────────── */
-.loading-screen {
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-}
+/* ─── Loading screen: scroll-track fly-through ──────────────────────── */
+/* A single continuous CSS 3D camera move forward through:
+   1. A 3×3 photo wall (focus tile centered on screen)
+   2. Three text layers — listener overlap, similar sound, match score
+   3. A final "Swipe." reveal
+   The whole thing runs once in ~9 seconds. App.jsx enforces a minimum
+   loading hold so users always see the full sequence. */
 
-.loading-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 28px calc(60px + var(--safe-bottom));
-  gap: 36px;
-  text-align: center;
-}
-
-.loading-pulse {
+.ls-screen {
   position: relative;
-  width: 140px;
-  height: 140px;
+  min-height: 100dvh;
+  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  overflow: hidden;
+  color: var(--charcoal);
+  font-family: var(--font-body);
 }
 
-.loading-ring {
+.ls-scene {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  background: var(--accent-grad);
-  opacity: 0;
-  animation: load-pulse 3.2s ease-out infinite;
+  perspective: 900px;
+  perspective-origin: 50% 50%;
+  overflow: hidden;
 }
 
-.loading-ring-2 { animation-delay: 1.05s; }
-.loading-ring-3 { animation-delay: 2.1s; }
-
-@keyframes load-pulse {
-  0%   { transform: scale(0.3); opacity: 0.7; }
-  60%  { opacity: 0.18; }
-  100% { transform: scale(1.5); opacity: 0; }
+.ls-camera {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: ls-fly 9s cubic-bezier(0.5, 0, 0.65, 1) forwards;
+  will-change: transform;
 }
 
-.loading-text {
-  max-width: 320px;
+@keyframes ls-fly {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, 0, 4800px); }
 }
 
-.loading-text .eyebrow {
-  margin-bottom: 12px;
+.ls-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  will-change: opacity, transform;
 }
 
-.loading-phase {
+/* ── Photo wall ──────────────────────────────────────────────────────
+   The grid is 200% of the layer width. We position it so the center of
+   the top-left tile (16.67% in from the wall's top-left) sits at screen
+   center. As the camera moves forward, the wall scales naturally via
+   perspective and the focus tile fills the viewport. */
+.ls-layer-wall {
+  transform: translateZ(-150px);
+  animation: ls-wall-fade 9s ease-out forwards;
+}
+@keyframes ls-wall-fade {
+  0%   { opacity: 1; }
+  14%  { opacity: 1; }
+  20%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.ls-wall-grid {
+  position: absolute;
+  width: 200%;
+  aspect-ratio: 1 / 1;
+  /* These offsets put the top-left tile's center at the layer center.
+     With the grid at 200% layer width and the top-left tile at the wall's
+     (16.67%, 16.67%) point: left/top = 50% center - 16.67% offset = 33.33%
+     minus the layer's own coords. Empirically positioned so the focal
+     tile lands at screen center on standard mobile aspect ratios. */
+  top: 41.6%;
+  left: -16.7%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  transform: translateY(-50%);
+}
+
+.ls-tile {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2A1820, #5C3540);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.ls-tile-1 { background: linear-gradient(135deg, #5C3540, #C5A6AC); }
+.ls-tile-2 { background: linear-gradient(135deg, #1A1518, #F2D78D); }
+.ls-tile-3 { background: linear-gradient(135deg, #F7C0CE, #2A1820); }
+.ls-tile-4 { background: linear-gradient(135deg, #C5A6AC, #5C3540); }
+.ls-tile-5 { background: linear-gradient(135deg, #2A1820, #C5A6AC); }
+.ls-tile-6 { background: linear-gradient(135deg, #5C3540, #1A1518); }
+.ls-tile-7 { background: linear-gradient(135deg, #F2D78D, #5C3540); }
+.ls-tile-8 { background: linear-gradient(135deg, #C5A6AC, #2A1820); }
+
+.ls-tile-focus {
+  background: radial-gradient(circle at 35% 30%, #5C3540 0%, #2A1820 65%, #0F0A0E 100%);
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 -30px 50px rgba(0, 0, 0, 0.4),
+    inset 0 20px 40px rgba(247, 192, 206, 0.15);
+}
+
+.ls-tile-name {
+  position: absolute;
+  top: 24%;
+  left: 0; right: 0;
+  text-align: center;
+  color: #FAF4ED;
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 0.95;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  padding: 0 8px;
+}
+
+.ls-tile-label {
+  position: absolute;
+  bottom: 8%;
+  left: 0; right: 0;
+  text-align: center;
+  color: #FAF4ED;
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: -0.6px;
-  color: var(--ink);
-  line-height: 1.15;
-  margin-bottom: 18px;
-  background: var(--accent-grad);
+  letter-spacing: 1.2px;
+  opacity: 0.85;
+}
+
+/* ── Text layers ─────────────────────────────────────────────────── */
+.ls-text {
+  text-align: center;
+  color: var(--charcoal);
+  text-transform: uppercase;
+  padding: 0 20px;
+}
+
+.ls-eyebrow {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 2.2px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  opacity: 0.65;
+  text-transform: uppercase;
+}
+
+.ls-big {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(64px, 24vw, 100px);
+  letter-spacing: -3.5px;
+  line-height: 0.85;
+}
+
+.ls-grad {
+  background: linear-gradient(90deg, #1A1518, #5C3540);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-.loading-seeds {
-  font-size: 13px;
-  color: var(--ink-mid);
-  line-height: 1.55;
-  margin: 0;
-}
-
-.loading-seeds strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.loading-and-more {
-  color: var(--ink-light);
+.ls-footnote {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  margin-top: 14px;
+  opacity: 0.55;
   font-weight: 500;
+}
+
+.ls-layer-t1 {
+  transform: translateZ(-1200px);
+  animation: ls-t1 9s ease-out forwards;
+}
+@keyframes ls-t1 {
+  0%, 14% { opacity: 0; }
+  22%     { opacity: 1; }
+  40%     { opacity: 1; }
+  48%     { opacity: 0; }
+  100%    { opacity: 0; }
+}
+
+.ls-layer-t2 {
+  transform: translateZ(-2200px);
+  animation: ls-t2 9s ease-out forwards;
+}
+@keyframes ls-t2 {
+  0%, 36% { opacity: 0; }
+  44%     { opacity: 1; }
+  62%     { opacity: 1; }
+  70%     { opacity: 0; }
+  100%    { opacity: 0; }
+}
+
+.ls-layer-t3 {
+  transform: translateZ(-3200px);
+  animation: ls-t3 9s ease-out forwards;
+}
+@keyframes ls-t3 {
+  0%, 58% { opacity: 0; }
+  66%     { opacity: 1; }
+  78%     { opacity: 1; }
+  84%     { opacity: 0; }
+  100%    { opacity: 0; }
+}
+
+.ls-layer-final {
+  transform: translateZ(-4500px);
+  animation: ls-final 9s ease-out forwards;
+}
+@keyframes ls-final {
+  0%, 78% { opacity: 0; }
+  88%     { opacity: 1; }
+  100%    { opacity: 1; }
+}
+
+.ls-big-final {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(56px, 18vw, 78px);
+  letter-spacing: -2.5px;
+  line-height: 0.9;
+  color: var(--charcoal);
+  text-transform: none;
+}
+
+.ls-arrow {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 10px;
+  background: linear-gradient(90deg, #1A1518, #5C3540);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Vignette for depth ──────────────────────────────────────────── */
+.ls-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(26, 21, 24, 0.18) 100%);
+}
+
+/* ── HUD ─────────────────────────────────────────────────────────── */
+.ls-hud-top {
+  position: absolute;
+  top: calc(18px + var(--safe-top));
+  left: 22px;
+  right: 22px;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  color: var(--charcoal);
+  opacity: 0.7;
+}
+
+.ls-hud-bottom {
+  position: absolute;
+  bottom: calc(22px + var(--safe-bottom));
+  left: 22px;
+  right: 22px;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--charcoal);
+}
+
+.ls-hud-stage {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  max-width: 60%;
+  line-height: 1.25;
+}
+
+.ls-hud-counter {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  opacity: 0.7;
 }
 
 /* ─── Amplify sheet — the Forbes-worthy save → grow mechanic ────────── */
