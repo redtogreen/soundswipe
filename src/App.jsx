@@ -239,6 +239,30 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Handle deep links: /?artist=bailey-zimmerman opens that artist's
+  // expand page directly. The artist data is fetched fresh from Last.fm
+  // via /api/artist?slug=...
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    const slug = url.searchParams.get('artist')
+    if (!slug) return
+    // Don't intercept OAuth callbacks
+    if (url.searchParams.has('code') || url.searchParams.has('error')) return
+
+    fetch(`/api/artist?slug=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.ok && data.artist) {
+          setExpandArtist(data.artist)
+          setExpandFromQueue(false)
+          setScreen('expand')
+        }
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const handleConnectSpotify = (returnTo = 'saved') => {
     beginAuth(returnTo).catch((err) => {
       showToast(err.message || 'Could not start Spotify sign-in')
@@ -433,9 +457,22 @@ export default function App() {
     }, 6000)
   }
 
+  // Slug helper for deep-link share URLs
+  const artistSlug = (name) =>
+    String(name || '')
+      .toLowerCase()
+      .trim()
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+
   // Native-share fallback to clipboard. Either way, records the amplification.
+  // URL is a deep link to the artist's page: /?artist=bailey-zimmerman
   const shareArtist = async (artist) => {
-    const url = 'https://soundswipe-pink.vercel.app/'
+    const slug = artistSlug(artist.name)
+    const url = `${window.location.origin}/?artist=${slug}`
     const text = `Just discovered ${artist.name} on SoundSwipe. Check them out → ${url}`
     let shared = false
     if (typeof navigator !== 'undefined' && navigator.share) {
@@ -447,12 +484,15 @@ export default function App() {
       }
     } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
       try {
-        await navigator.clipboard.writeText(text)
+        await navigator.clipboard.writeText(url)
         shared = true
         showToast('Link copied')
       } catch {}
     }
-    if (shared) recordAmp(artist, 'share')
+    if (shared) {
+      recordAmp(artist, 'share')
+      Analytics.amplify_share({ artist: artist.name })
+    }
   }
 
   // Track the last swipe so it can be undone
@@ -524,10 +564,20 @@ export default function App() {
     setLoadingSeeds(seedArtists || [])
     navigate('loading')
     const startedAt = Date.now()
-    const artists = await fetchArtists({ seedArtists, genres: derivedGenres })
-    await holdAtLeast(startedAt)
-    setQueue(artists)
-    navigate('swipe')
+    try {
+      Analytics.top_artists_confirm({ count: (seedArtists || []).length })
+      const artists = await fetchArtists({ seedArtists, genres: derivedGenres })
+      await holdAtLeast(startedAt)
+      if (!artists || artists.length === 0) throw new Error('empty_queue')
+      setQueue(artists)
+      navigate('swipe')
+    } catch (err) {
+      await holdAtLeast(startedAt)
+      navigate('top-artists')
+      showToast(err?.message === 'empty_queue'
+        ? 'Couldn’t find matches — try different seeds'
+        : 'Discovery engine hiccupped — try again')
+    }
   }
 
   const handleTopArtistsError = (kind) => {
@@ -550,10 +600,20 @@ export default function App() {
     setLoadingSeeds([])
     navigate('loading')
     const startedAt = Date.now()
-    const artists = await fetchArtists({ genres: selectedGenres })
-    await holdAtLeast(startedAt)
-    setQueue(artists)
-    navigate('swipe')
+    try {
+      Analytics.genre_confirm({ count: selectedGenres.length })
+      const artists = await fetchArtists({ genres: selectedGenres })
+      await holdAtLeast(startedAt)
+      if (!artists || artists.length === 0) throw new Error('empty_queue')
+      setQueue(artists)
+      navigate('swipe')
+    } catch (err) {
+      await holdAtLeast(startedAt)
+      navigate('genre')
+      showToast(err?.message === 'empty_queue'
+        ? 'No artists found for those genres'
+        : 'Discovery engine hiccupped — try again')
+    }
   }
 
   // ── API fetch ──────────────────────────────────────────────────────

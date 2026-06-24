@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchRising } from '../lib/amplify-tracking.js'
+import { Events as Analytics } from '../lib/analytics.js'
 
 function weekDisplay(weekKey) {
   // weekKey looks like "2026-W25" — convert to "Week of Jun 16"
@@ -35,6 +36,7 @@ export default function RisingScreen({ onBack }) {
 
   useEffect(() => {
     let cancelled = false
+    Analytics.rising_view({})
     fetchRising({ limit: 25 })
       .then((data) => { if (!cancelled) setState({ loading: false, error: null, data }) })
       .catch((err) => { if (!cancelled) setState({ loading: false, error: err.message, data: null }) })

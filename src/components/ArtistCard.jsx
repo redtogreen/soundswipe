@@ -182,6 +182,15 @@ export default function ArtistCard({
           <div className="genre-stamp">{artist.genre}</div>
         </div>
 
+        {/* Match score badge — top-right */}
+        {typeof artist._match === 'number' && artist._match > 0 && (
+          <div className="match-badge" title="Taste-match score from Last.fm collaborative filtering">
+            <span className="match-badge-num">{Math.round(artist._match * 100)}</span>
+            <span className="match-badge-pct">%</span>
+            <span className="match-badge-label">MATCH</span>
+          </div>
+        )}
+
         {/* Audio control — starts playback on first tap (iOS), then toggles mute */}
         {isTop && hasAudio && (
           <button
@@ -240,7 +249,25 @@ export default function ArtistCard({
       <div className="artist-card-content">
         <div className="artist-card-name">{artist.name}</div>
         {artist.location && <div className="artist-card-location">{artist.location}</div>}
+
+        {/* Community tags — Last.fm signal */}
+        {artist.tags && artist.tags.length > 0 && (
+          <div className="artist-card-tags">
+            {artist.tags.slice(0, 3).map((tag) => (
+              <span key={tag} className="artist-card-tag">{tag.toLowerCase()}</span>
+            ))}
+          </div>
+        )}
+
+        {/* "Discovered through" — taste-thread trace */}
+        {artist._seed && (
+          <div className="artist-card-trace">
+            Through your love of <strong>{artist._seed}</strong>
+          </div>
+        )}
+
         {artist.bio && <div className="artist-card-bio">{artist.bio}</div>}
+
         {isTop && (
           <div className="artist-card-hint">← pass &nbsp;·&nbsp; ↑ hear more &nbsp;·&nbsp; save →</div>
         )}

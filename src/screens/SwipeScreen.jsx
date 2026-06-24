@@ -1,9 +1,26 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ArtistCard from '../components/ArtistCard.jsx'
 import { IconSkip, IconHear, IconSave, IconCircles } from '../components/Icons.jsx'
 
+const HINTS_SEEN_KEY = 'soundswipe_hints_seen_v1'
+
 export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onPass, onExpand, onGoSaved, onBackToGenres, onChangeSource, isMuted, audioStarted, onAudioTap }) {
   const visible = queue.slice(0, 3)
+
+  // Show onboarding hints once on first-ever swipe view
+  const [showHints, setShowHints] = useState(false)
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(HINTS_SEEN_KEY) && queue.length > 0) {
+        setShowHints(true)
+      }
+    } catch {}
+  }, [queue.length])
+
+  const dismissHints = () => {
+    setShowHints(false)
+    try { localStorage.setItem(HINTS_SEEN_KEY, '1') } catch {}
+  }
 
   const handleSwiped = useCallback(() => {
     setQueue(prev => prev.slice(1))
@@ -138,6 +155,32 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onP
           <span className="tally-label">Saved</span>
         </button>
       </div>
+
+      {/* First-time onboarding hints */}
+      {showHints && (
+        <div className="swipe-hints-overlay" onClick={dismissHints} role="dialog" aria-label="How to use SoundSwipe">
+          <div className="swipe-hints-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="swipe-hints-title">Three gestures.<br/>That's it.</h3>
+            <ul className="swipe-hints-list">
+              <li>
+                <span className="swipe-hints-gesture">→</span>
+                <span><strong>Swipe right</strong> to save. We'll auto-follow on your music services.</span>
+              </li>
+              <li>
+                <span className="swipe-hints-gesture">←</span>
+                <span><strong>Swipe left</strong> to pass. Or just keep listening.</span>
+              </li>
+              <li>
+                <span className="swipe-hints-gesture">↑</span>
+                <span><strong>Swipe up</strong> to hear more songs from the artist.</span>
+              </li>
+            </ul>
+            <button className="swipe-hints-dismiss" onClick={dismissHints}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

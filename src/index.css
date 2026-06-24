@@ -1773,11 +1773,26 @@ html, body {
 .manifesto {
   width: 100%;
   max-width: var(--max-w);
-  background: var(--bg);
+  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  color: var(--charcoal);
   position: relative;
   padding: 48px 28px 32px;
   overflow-y: auto;
   animation: manifesto-slide 0.32s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.manifesto .eyebrow,
+.manifesto .manifesto-title,
+.manifesto .manifesto-body,
+.manifesto .splash-accent {
+  color: var(--charcoal);
+}
+
+.manifesto .splash-accent {
+  background: linear-gradient(90deg, #1A1518, #5C3540);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @keyframes manifesto-slide {
@@ -1902,6 +1917,331 @@ html, body {
 .splash-v2-reset:hover { opacity: 1; }
 
 .splash-v2-link { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ─── Accessibility — visible focus for keyboard users ────────────── */
+*:focus { outline: none; }
+
+*:focus-visible {
+  outline: 2px solid #F2D78D;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #F2D78D;
+  outline-offset: 2px;
+}
+
+/* Skip the visible outline on the swipe card itself (it has its own
+   drag-handling) but still allow keyboard users to focus the action buttons. */
+.artist-card:focus,
+.artist-card:focus-visible { outline: none; }
+
+/* Screen-reader-only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Respect user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── Splash-language wrapper — reusable across onboarding screens ── */
+.splash-lang {
+  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  color: var(--charcoal);
+}
+
+.splash-lang .eyebrow,
+.splash-lang .ta-eyebrow,
+.splash-lang .splash-lang-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(26, 21, 24, 0.65);
+}
+
+.splash-lang .display-lg,
+.splash-lang .splash-lang-display {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 14vw, 68px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -2.2px;
+  color: var(--charcoal);
+}
+
+.splash-lang .splash-lang-grad {
+  background: linear-gradient(90deg, #1A1518, #5C3540);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.splash-lang .masthead {
+  color: var(--charcoal);
+  background: transparent;
+}
+
+.splash-lang .masthead-btn,
+.splash-lang .masthead-logo,
+.splash-lang .masthead-label {
+  color: var(--charcoal);
+}
+
+.splash-lang .onboarding-card {
+  background: rgba(250, 244, 237, 0.62);
+  border: 1px solid rgba(26, 21, 24, 0.18);
+  border-radius: 0;
+  color: var(--charcoal);
+}
+
+.splash-lang .onboarding-card-primary {
+  background: var(--charcoal);
+  color: #FAF4ED;
+  border-color: var(--charcoal);
+}
+
+.splash-lang .onboarding-card-primary .onboarding-card-eyebrow,
+.splash-lang .onboarding-card-primary .onboarding-card-sub {
+  color: rgba(250, 244, 237, 0.7);
+}
+
+.splash-lang .onboarding-card-primary .onboarding-card-cta {
+  background: linear-gradient(90deg, #F7C0CE, #F2D78D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─── Artist card — Last.fm signal surfaces ───────────────────────── */
+.match-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  background: rgba(26, 21, 24, 0.82);
+  color: #FAF4ED;
+  padding: 6px 10px 6px 10px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.match-badge-num {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #F7C0CE, #F2D78D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.match-badge-pct {
+  font-size: 11px;
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+.match-badge-label {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+.artist-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.artist-card-tag {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  padding: 3px 8px;
+  background: rgba(31, 18, 24, 0.06);
+  color: var(--ink-mid);
+  border-radius: 999px;
+}
+
+.artist-card-trace {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-bottom: 8px;
+  letter-spacing: 0.1px;
+  font-style: italic;
+}
+
+.artist-card-trace strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* ─── First-time onboarding hints (Swipe screen) ───────────────────── */
+.swipe-hints-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: auto;
+  background: rgba(31, 18, 24, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hint-fade-in 0.35s ease-out;
+}
+
+@keyframes hint-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.swipe-hints-card {
+  background: var(--bg);
+  color: var(--ink);
+  padding: 28px 26px 22px;
+  max-width: 300px;
+  text-align: center;
+  border-radius: 0;
+  position: relative;
+}
+
+.swipe-hints-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  margin: 0 0 14px;
+  line-height: 1.1;
+}
+
+.swipe-hints-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  text-align: left;
+}
+
+.swipe-hints-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-mid);
+  padding: 8px 0;
+  border-top: 0.5px solid var(--border);
+  line-height: 1.4;
+}
+
+.swipe-hints-list li:first-child { border-top: none; }
+.swipe-hints-list strong { color: var(--ink); font-weight: 600; }
+
+.swipe-hints-gesture {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #F7C0CE, #F2D78D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.swipe-hints-dismiss {
+  width: 100%;
+  background: var(--ink);
+  color: var(--bg);
+  border: none;
+  padding: 12px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+/* ─── Error states ─────────────────────────────────────────────────── */
+.error-state {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px calc(40px + var(--safe-bottom));
+  gap: 14px;
+  text-align: center;
+}
+
+.error-state-eyebrow {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+.error-state-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  line-height: 1.05;
+  color: var(--ink);
+  margin: 0;
+}
+
+.error-state-body {
+  font-size: 14px;
+  color: var(--ink-mid);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 320px;
+}
+
+.error-state-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
 
 /* ─── Splash v3 — video plays through SOUND/SWIPE text mask ─────────── */
 /* Three stacked layers:

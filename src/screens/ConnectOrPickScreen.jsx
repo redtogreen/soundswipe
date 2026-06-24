@@ -4,7 +4,7 @@ export default function ConnectOrPickScreen({ onConnectSpotify, onPickGenres, on
   const canConnect = isConfigured()
 
   return (
-    <div className="screen splash">
+    <div className="screen splash splash-lang">
       <div className="status-bar">
         <span className="status-bar-time">9:41</span>
       </div>
@@ -12,17 +12,16 @@ export default function ConnectOrPickScreen({ onConnectSpotify, onPickGenres, on
       <div className="masthead">
         <button className="masthead-btn" onClick={onBack}>← Back</button>
         <span className="masthead-logo">SoundSwipe</span>
-        <span className="masthead-label">Start</span>
+        <span />
       </div>
 
       <div className="splash-body" style={{ paddingTop: 24 }}>
         <div className="eyebrow" style={{ marginBottom: 10 }}>Personalize your finds</div>
 
-        <div className="display-lg" style={{ marginBottom: 10 }}>
-          How should<br />we start?
+        <div className="display-lg" style={{ marginBottom: 18 }}>
+          How should<br />
+          <span className="splash-lang-grad">we start?</span>
         </div>
-
-        <div className="splash-rule-gap" />
 
         {/* Spotify card — primary */}
         {canConnect && (

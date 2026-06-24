@@ -5,7 +5,7 @@ export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }
   const count = selectedGenres.length
 
   return (
-    <div className="screen genre-screen">
+    <div className="screen genre-screen splash-lang">
       {/* Status bar */}
       <div className="status-bar">
         <span className="status-bar-time">9:41</span>
@@ -14,16 +14,15 @@ export default function GenreScreen({ selectedGenres, onToggleGenre, onConfirm }
       {/* Masthead */}
       <div className="masthead">
         <span className="masthead-logo">SoundSwipe</span>
-        <span className="masthead-label">Section A</span>
+        <span />
       </div>
 
       {/* Header */}
       <div className="genre-header">
-        <div className="eyebrow" style={{ marginBottom: 8 }}>What are you in the mood to find</div>
-        <div className="display-lg" style={{ marginBottom: 8 }}>
-          Pick Your<br />Sound
+        <div className="eyebrow" style={{ marginBottom: 8 }}>What are you in the mood for</div>
+        <div className="display-lg" style={{ marginBottom: 12 }}>
+          Pick your<br /><span className="splash-lang-grad">sound.</span>
         </div>
-        <div className="rule-heavy" />
       </div>
 
       {/* Genre grid */}
