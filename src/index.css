@@ -2619,297 +2619,159 @@ a:focus-visible {
    The whole thing runs once in ~9 seconds. App.jsx enforces a minimum
    loading hold so users always see the full sequence. */
 
+/* The loading screen sits over whatever screen is next (swipe). Two charcoal
+   curtains slide in from top and bottom, meet at the middle, hold while we
+   narrate the discovery, then retract — revealing the swipe screen behind. */
+
 .ls-screen {
-  position: relative;
-  min-height: 100dvh;
-  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
   overflow: hidden;
-  color: var(--charcoal);
+  pointer-events: none;
   font-family: var(--font-body);
 }
 
-.ls-scene {
+/* Curtains — solid charcoal slabs that meet at center */
+.ls-curtain {
   position: absolute;
-  inset: 0;
-  perspective: 900px;
-  perspective-origin: 50% 50%;
-  overflow: hidden;
-}
-
-.ls-camera {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  animation: ls-fly 9s cubic-bezier(0.5, 0, 0.65, 1) forwards;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: var(--charcoal);
   will-change: transform;
 }
 
-@keyframes ls-fly {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(0, 0, 4800px); }
+.ls-curtain-top {
+  top: 0;
+  transform: translateY(-100%);
+  animation: ls-top 6.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
 }
 
-.ls-layer {
+.ls-curtain-bottom {
+  bottom: 0;
+  transform: translateY(100%);
+  animation: ls-bottom 6.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+}
+
+@keyframes ls-top {
+  0%   { transform: translateY(-100%); }
+  9%   { transform: translateY(0); }       /* closed at ~0.6s */
+  85%  { transform: translateY(0); }       /* hold through 5.6s */
+  100% { transform: translateY(-100%); }   /* opened by 6.6s */
+}
+
+@keyframes ls-bottom {
+  0%   { transform: translateY(100%); }
+  9%   { transform: translateY(0); }
+  85%  { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* Content overlay — sits above the curtains, fades through 5 states
+   in sync with the closed-curtain window (0.6s → 5.6s). */
+.ls-curtain-content {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform-style: preserve-3d;
+  color: #FAF4ED;
+  z-index: 5;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.ls-state {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
   will-change: opacity, transform;
 }
 
-/* ── Photo wall ──────────────────────────────────────────────────────
-   The grid is 200% of the layer width. We position it so the center of
-   the top-left tile (16.67% in from the wall's top-left) sits at screen
-   center. As the camera moves forward, the wall scales naturally via
-   perspective and the focus tile fills the viewport. */
-.ls-layer-wall {
-  transform: translateZ(-150px);
-  animation: ls-wall-fade 9s ease-out forwards;
-}
-@keyframes ls-wall-fade {
-  0%   { opacity: 1; }
-  14%  { opacity: 1; }
-  20%  { opacity: 0; }
-  100% { opacity: 0; }
+.ls-state-1 { animation: ls-show 1.4s ease-in-out 0.6s forwards; }
+.ls-state-2 { animation: ls-show 1.0s ease-in-out 2.0s forwards; }
+.ls-state-3 { animation: ls-show 1.0s ease-in-out 3.0s forwards; }
+.ls-state-4 { animation: ls-show 1.0s ease-in-out 4.0s forwards; }
+.ls-state-5 { animation: ls-show 0.7s ease-in-out 5.0s forwards; }
+
+@keyframes ls-show {
+  0%   { opacity: 0; transform: translateY(8px); }
+  18%  { opacity: 1; transform: translateY(0); }
+  82%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
 }
 
-.ls-wall-grid {
-  position: absolute;
-  width: 200%;
-  aspect-ratio: 1 / 1;
-  /* These offsets put the top-left tile's center at the layer center.
-     With the grid at 200% layer width and the top-left tile at the wall's
-     (16.67%, 16.67%) point: left/top = 50% center - 16.67% offset = 33.33%
-     minus the layer's own coords. Empirically positioned so the focal
-     tile lands at screen center on standard mobile aspect ratios. */
-  top: 41.6%;
-  left: -16.7%;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  transform: translateY(-50%);
-}
-
-.ls-tile {
-  border-radius: 8px;
-  background: linear-gradient(135deg, #2A1820, #5C3540);
-  background-size: cover;
-  background-position: center;
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 1;
-}
-
-.ls-tile-1 { background: linear-gradient(135deg, #5C3540, #C5A6AC); }
-.ls-tile-2 { background: linear-gradient(135deg, #1A1518, #F2D78D); }
-.ls-tile-3 { background: linear-gradient(135deg, #F7C0CE, #2A1820); }
-.ls-tile-4 { background: linear-gradient(135deg, #C5A6AC, #5C3540); }
-.ls-tile-5 { background: linear-gradient(135deg, #2A1820, #C5A6AC); }
-.ls-tile-6 { background: linear-gradient(135deg, #5C3540, #1A1518); }
-.ls-tile-7 { background: linear-gradient(135deg, #F2D78D, #5C3540); }
-.ls-tile-8 { background: linear-gradient(135deg, #C5A6AC, #2A1820); }
-
-.ls-tile-focus {
-  background: radial-gradient(circle at 35% 30%, #5C3540 0%, #2A1820 65%, #0F0A0E 100%);
-  background-size: cover;
-  background-position: center;
-  box-shadow:
-    inset 0 -30px 50px rgba(0, 0, 0, 0.4),
-    inset 0 20px 40px rgba(247, 192, 206, 0.15);
-}
-
-.ls-tile-name {
-  position: absolute;
-  top: 24%;
-  left: 0; right: 0;
-  text-align: center;
-  color: #FAF4ED;
+/* ── Brand state ── */
+.ls-brand {
   font-family: var(--font-display);
-  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.5px;
-  line-height: 0.95;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
-  padding: 0 8px;
+  font-size: clamp(58px, 18vw, 84px);
+  letter-spacing: -2.8px;
+  line-height: 0.88;
+  color: #FAF4ED;
 }
 
-.ls-tile-label {
-  position: absolute;
-  bottom: 8%;
-  left: 0; right: 0;
-  text-align: center;
-  color: #FAF4ED;
+.ls-brand-sub {
   font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  opacity: 0.85;
-}
-
-/* ── Text layers ─────────────────────────────────────────────────── */
-.ls-text {
-  text-align: center;
-  color: var(--charcoal);
+  letter-spacing: 1.6px;
   text-transform: uppercase;
-  padding: 0 20px;
+  opacity: 0.6;
+  margin-top: 14px;
 }
 
-.ls-eyebrow {
+/* ── Algorithm states ── */
+.ls-state-eye {
   font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
-  font-size: 13px;
-  letter-spacing: 2.2px;
+  font-size: 12px;
   font-weight: 600;
-  margin-bottom: 8px;
-  opacity: 0.65;
+  letter-spacing: 2.2px;
   text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 6px;
 }
 
-.ls-big {
+.ls-state-big {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(64px, 24vw, 100px);
-  letter-spacing: -3.5px;
-  line-height: 0.85;
+  font-size: clamp(52px, 16vw, 76px);
+  letter-spacing: -2.5px;
+  line-height: 0.88;
+  text-transform: uppercase;
+  color: #FAF4ED;
+}
+
+.ls-state-sub {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.48;
+  margin-top: 12px;
 }
 
 .ls-grad {
-  background: linear-gradient(90deg, #1A1518, #5C3540);
+  background: linear-gradient(90deg, #F7C0CE, #F2D78D);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-.ls-footnote {
-  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
-  font-size: 11px;
-  letter-spacing: 1.4px;
-  margin-top: 14px;
-  opacity: 0.55;
-  font-weight: 500;
-}
-
-.ls-layer-t1 {
-  transform: translateZ(-1200px);
-  animation: ls-t1 9s ease-out forwards;
-}
-@keyframes ls-t1 {
-  0%, 14% { opacity: 0; }
-  22%     { opacity: 1; }
-  40%     { opacity: 1; }
-  48%     { opacity: 0; }
-  100%    { opacity: 0; }
-}
-
-.ls-layer-t2 {
-  transform: translateZ(-2200px);
-  animation: ls-t2 9s ease-out forwards;
-}
-@keyframes ls-t2 {
-  0%, 36% { opacity: 0; }
-  44%     { opacity: 1; }
-  62%     { opacity: 1; }
-  70%     { opacity: 0; }
-  100%    { opacity: 0; }
-}
-
-.ls-layer-t3 {
-  transform: translateZ(-3200px);
-  animation: ls-t3 9s ease-out forwards;
-}
-@keyframes ls-t3 {
-  0%, 58% { opacity: 0; }
-  66%     { opacity: 1; }
-  78%     { opacity: 1; }
-  84%     { opacity: 0; }
-  100%    { opacity: 0; }
-}
-
-.ls-layer-final {
-  transform: translateZ(-4500px);
-  animation: ls-final 9s ease-out forwards;
-}
-@keyframes ls-final {
-  0%, 78% { opacity: 0; }
-  88%     { opacity: 1; }
-  100%    { opacity: 1; }
-}
-
-.ls-big-final {
+/* ── Ready arrow ── */
+.ls-ready {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(56px, 18vw, 78px);
-  letter-spacing: -2.5px;
-  line-height: 0.9;
-  color: var(--charcoal);
-  text-transform: none;
-}
-
-.ls-arrow {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 700;
-  margin-top: 10px;
-  background: linear-gradient(90deg, #1A1518, #5C3540);
+  font-size: clamp(80px, 26vw, 120px);
+  line-height: 0.85;
+  background: linear-gradient(90deg, #F7C0CE, #F2D78D);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-
-/* ── Vignette for depth ──────────────────────────────────────────── */
-.ls-vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(26, 21, 24, 0.18) 100%);
-}
-
-/* ── HUD ─────────────────────────────────────────────────────────── */
-.ls-hud-top {
-  position: absolute;
-  top: calc(18px + var(--safe-top));
-  left: 22px;
-  right: 22px;
-  z-index: 50;
-  display: flex;
-  justify-content: space-between;
-  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.4px;
-  color: var(--charcoal);
-  opacity: 0.7;
-}
-
-.ls-hud-bottom {
-  position: absolute;
-  bottom: calc(22px + var(--safe-bottom));
-  left: 22px;
-  right: 22px;
-  z-index: 50;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--charcoal);
-}
-
-.ls-hud-stage {
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-  max-width: 60%;
-  line-height: 1.25;
-}
-
-.ls-hud-counter {
-  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  opacity: 0.7;
 }
 
 /* ─── Amplify sheet — the Forbes-worthy save → grow mechanic ────────── */

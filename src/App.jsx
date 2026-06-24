@@ -547,9 +547,9 @@ export default function App() {
   // Seed artists currently being matched against (for loading screen display)
   const [loadingSeeds, setLoadingSeeds] = useState([])
 
-  // Minimum time we hold the loading screen so the fly-through animation
-  // completes even if the API is fast. 9s matches the camera animation.
-  const MIN_LOADING_MS = 9000
+  // Minimum time we hold the loading screen so the curtain animation
+  // completes even if the API is fast. Matches the 6.6s CSS animation.
+  const MIN_LOADING_MS = 6600
 
   async function holdAtLeast(startedAt) {
     const elapsed = Date.now() - startedAt
@@ -888,7 +888,9 @@ export default function App() {
         />
       )}
 
-      {screen === 'swipe' && (
+      {/* Swipe screen renders during 'loading' too once the queue is ready,
+          so the curtain-open animation reveals the actual first card behind. */}
+      {(screen === 'swipe' || (screen === 'loading' && queue.length > 0)) && (
         <SwipeScreen
           queue={queue}
           setQueue={setQueue}
