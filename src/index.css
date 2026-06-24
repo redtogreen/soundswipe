@@ -2260,68 +2260,64 @@ a:focus-visible {
   overflow: hidden;
 }
 
+/* Flowing gradient — slow, hypnotic, like watching a tide.
+   Base layer = a wide multi-color linear gradient whose position drifts
+   along a wave path. Pseudo-overlays add slow-drifting radial highlights
+   for depth, plus film grain. No hard cuts; everything moves continuously. */
+
 .splash-v3-video {
   position: absolute;
   inset: 0;
   z-index: 0;
-  animation: splash-v3-cycle 7.5s step-end infinite;
+  background: linear-gradient(
+    105deg,
+    #F7C0CE 0%,
+    #F2D78D 14%,
+    #FFB07A 28%,
+    #E58FA5 42%,
+    #F7C0CE 56%,
+    #F2D78D 70%,
+    #FF8B6A 84%,
+    #E58FA5 100%
+  );
+  background-size: 400% 400%;
+  animation: splash-flow 18s ease-in-out infinite;
 }
 
-@keyframes splash-v3-cycle {
-  0% {
-    background:
-      radial-gradient(circle at 25% 30%, rgba(247,192,206,0.55) 0%, transparent 35%),
-      radial-gradient(circle at 75% 60%, rgba(242,215,141,0.45) 0%, transparent 40%),
-      linear-gradient(160deg, #2A1820 0%, #0F0A0E 100%);
-  }
-  14% {
-    background:
-      radial-gradient(circle at 60% 40%, rgba(255,140,90,0.6) 0%, transparent 45%),
-      linear-gradient(180deg, #4A1E14 0%, #1A0C0A 100%);
-  }
-  28% {
-    background:
-      radial-gradient(circle at 30% 70%, rgba(247,192,206,0.7) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(180,150,200,0.5) 0%, transparent 40%),
-      linear-gradient(135deg, #1A0E2A 0%, #0A0815 100%);
-  }
-  42% {
-    background:
-      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18) 0%, transparent 30%),
-      repeating-linear-gradient(45deg, #1A1518 0px, #1A1518 8px, #2A1820 8px, #2A1820 16px);
-  }
-  56% {
-    background:
-      radial-gradient(circle at 20% 60%, rgba(242,215,141,0.65) 0%, transparent 45%),
-      radial-gradient(circle at 70% 30%, rgba(247,192,206,0.5) 0%, transparent 35%),
-      linear-gradient(45deg, #5C3540 0%, #1A1518 100%);
-  }
-  70% {
-    background:
-      radial-gradient(circle at 40% 40%, rgba(150,200,255,0.5) 0%, transparent 40%),
-      linear-gradient(220deg, #0A1A2A 0%, #0F0A18 100%);
-  }
-  84% {
-    background:
-      radial-gradient(circle at 60% 50%, rgba(255,220,180,0.65) 0%, transparent 50%),
-      linear-gradient(180deg, #3A1F18 0%, #1A0F0A 100%);
-  }
-  100% {
-    background:
-      radial-gradient(circle at 25% 30%, rgba(247,192,206,0.55) 0%, transparent 35%),
-      radial-gradient(circle at 75% 60%, rgba(242,215,141,0.45) 0%, transparent 40%),
-      linear-gradient(160deg, #2A1820 0%, #0F0A0E 100%);
-  }
+@keyframes splash-flow {
+  0%   { background-position: 0% 0%; }
+  25%  { background-position: 50% 25%; }
+  50%  { background-position: 100% 75%; }
+  75%  { background-position: 50% 100%; }
+  100% { background-position: 0% 0%; }
 }
 
-/* Subtle film grain on the video layer */
+/* Slow-drifting radial highlights — adds organic depth on top of the flow */
+.splash-v3-video::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 30%, rgba(255, 200, 150, 0.45) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 70% 70%, rgba(255, 150, 180, 0.45) 0%, transparent 65%);
+  animation: splash-drift 22s ease-in-out infinite alternate;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+@keyframes splash-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-6%, -4%) scale(1.08); }
+}
+
+/* Subtle film grain — keeps the gradient from looking digital */
 .splash-v3-video::after {
   content: '';
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   background-size: 200px 200px;
-  opacity: 0.18;
+  opacity: 0.16;
   mix-blend-mode: overlay;
   pointer-events: none;
 }
