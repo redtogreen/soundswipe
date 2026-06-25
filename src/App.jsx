@@ -551,9 +551,11 @@ export default function App() {
     else navigate('manual-seed')
   }
 
-  // Manual seed → loading → swipe (same flow as TopArtistsConfirm)
+  // Manual seed → loading → swipe (uses the same discovery flow but
+  // remembers that the user came from manual-seed, not top-artists,
+  // so error bounces go back to the right screen.)
   const handleManualSeedStart = (seedArtists) => {
-    handleTopArtistsConfirm([], seedArtists)
+    handleTopArtistsConfirm([], seedArtists, 'manual-seed')
   }
 
   // Connect-or-Pick handlers
@@ -578,18 +580,19 @@ export default function App() {
     }
   }
 
-  // Top-artists confirmation → seed Last.fm similar-artist search
-  const handleTopArtistsConfirm = async (derivedGenres, seedArtists) => {
+  // Confirm seeds → run discovery. `sourceScreen` is where the user came
+  // from so we can route back there on error (was hardcoded 'top-artists',
+  // which broke manual-seed users — they got bounced to the Spotify screen).
+  const handleTopArtistsConfirm = async (derivedGenres, seedArtists, sourceScreen = 'top-artists') => {
     setSelectedGenres(derivedGenres)
     setLoadingSeeds(seedArtists || [])
-    setLoadingPrev('top-artists')
+    setLoadingPrev(sourceScreen)
     navigate('loading')
-    // Keep Top Artists rendered until curtains have closed over it (~700ms),
-    // then unmount so the next screen can fade in behind the closed curtains.
+    // Keep prev screen rendered until curtains have closed over it (~700ms).
     setTimeout(() => setLoadingPrev(null), 700)
     const startedAt = Date.now()
     try {
-      Analytics.top_artists_confirm({ count: (seedArtists || []).length })
+      Analytics.top_artists_confirm({ count: (seedArtists || []).length, source: sourceScreen })
       const artists = await fetchArtists({ seedArtists, genres: derivedGenres })
       await holdAtLeast(startedAt)
       if (!artists || artists.length === 0) throw new Error('empty_queue')
@@ -597,7 +600,7 @@ export default function App() {
       navigate('swipe')
     } catch (err) {
       await holdAtLeast(startedAt)
-      navigate('top-artists')
+      navigate(sourceScreen)
       showToast(err?.message === 'empty_queue'
         ? 'Couldn’t find matches — try different seeds'
         : 'Discovery engine hiccupped — try again')
@@ -925,7 +928,8 @@ export default function App() {
           onStart={handleTopArtistsConfirm}
           onPickGenres={() => navigate('genre')}
           onError={handleTopArtistsError}
-          onBack={() => navigate('connect-or-pick')}
+          onBack={() => navigate('connect-services')}
+          onTypeManually={() => navigate('manual-seed')}
         />
       )}
 

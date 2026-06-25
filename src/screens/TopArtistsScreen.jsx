@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getTopArtists, InsufficientScopeError } from '../lib/spotify-api.js'
 
-export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBack }) {
+export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBack, onTypeManually }) {
   const [artists, setArtists] = useState(null)  // null = loading, [] = empty, [...] = loaded
   const [excluded, setExcluded] = useState(new Set())
   const [loadError, setLoadError] = useState(null)
@@ -134,6 +134,15 @@ export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBac
             >
               Start listening · {selectedArtists.length} {selectedArtists.length === 1 ? 'artist' : 'artists'} →
             </button>
+            {onTypeManually && (
+              <button
+                className="cs-genre-link"
+                onClick={onTypeManually}
+                type="button"
+              >
+                Or type artists manually →
+              </button>
+            )}
           </div>
         </>
       )}

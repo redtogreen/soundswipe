@@ -56,8 +56,10 @@ export default function ConnectServicesScreen({
     Object.values(connectedMap).some(Boolean) ||
     prefs.preferred.length > 0
 
-  const oauthGroup = SERVICES.filter((s) => s.oauth)
-  const deepLinkGroup = SERVICES.filter((s) => s.deepLink)
+  // Only services we can ACTUALLY connect right now go in the top group.
+  // Everything else (deep-link platforms + not-yet-wired OAuth) goes below.
+  const oauthGroup = SERVICES.filter((s) => s.oauth && s.active)
+  const moreGroup = SERVICES.filter((s) => !s.oauth || !s.active)
 
   return (
     <div className="screen cs-screen">
@@ -101,7 +103,7 @@ export default function ConnectServicesScreen({
         })}
 
         <div className="cs-list-label" style={{ marginTop: 18 }}>Also listen here</div>
-        {deepLinkGroup.map((svc) => {
+        {moreGroup.map((svc) => {
           const preferred = prefs.preferred.includes(svc.id)
           return (
             <ServiceRow
