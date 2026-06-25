@@ -74,7 +74,7 @@ export default function TopArtistsScreen({ onStart, onPickGenres, onError, onBac
           <span className="ta-grad">artists.</span>
         </h1>
         <p className="ta-instr">
-          We'll find emerging artists who sound like these. Tap to exclude any you don't want as a seed.
+          We'll find artists who sound like these. Tap any to exclude.
         </p>
       </div>
 

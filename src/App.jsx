@@ -547,6 +547,11 @@ export default function App() {
   // Seed artists currently being matched against (for loading screen display)
   const [loadingSeeds, setLoadingSeeds] = useState([])
 
+  // Which screen was visible when the user kicked off loading. We keep it
+  // rendered behind the curtain for the close phase (~0.7s) so the curtains
+  // collapse OVER the user's current view, not over a flash of the next one.
+  const [loadingPrev, setLoadingPrev] = useState(null)
+
   // Minimum time we hold the loading screen so the curtain animation
   // completes even if the API is fast. Matches the 6.6s CSS animation.
   const MIN_LOADING_MS = 6600
@@ -562,7 +567,11 @@ export default function App() {
   const handleTopArtistsConfirm = async (derivedGenres, seedArtists) => {
     setSelectedGenres(derivedGenres)
     setLoadingSeeds(seedArtists || [])
+    setLoadingPrev('top-artists')
     navigate('loading')
+    // Keep Top Artists rendered until curtains have closed over it (~700ms),
+    // then unmount so the next screen can fade in behind the closed curtains.
+    setTimeout(() => setLoadingPrev(null), 700)
     const startedAt = Date.now()
     try {
       Analytics.top_artists_confirm({ count: (seedArtists || []).length })
@@ -598,7 +607,9 @@ export default function App() {
 
   const handleGenreConfirm = async () => {
     setLoadingSeeds([])
+    setLoadingPrev('genre')
     navigate('loading')
+    setTimeout(() => setLoadingPrev(null), 700)
     const startedAt = Date.now()
     try {
       Analytics.genre_confirm({ count: selectedGenres.length })
@@ -871,7 +882,9 @@ export default function App() {
         />
       )}
 
-      {screen === 'top-artists' && (
+      {/* Top Artists stays rendered during the first ~700ms of loading so the
+          curtain collapses OVER it rather than skipping past it. */}
+      {(screen === 'top-artists' || (screen === 'loading' && loadingPrev === 'top-artists')) && (
         <TopArtistsScreen
           onStart={handleTopArtistsConfirm}
           onPickGenres={() => navigate('genre')}
@@ -880,7 +893,7 @@ export default function App() {
         />
       )}
 
-      {screen === 'genre' && (
+      {(screen === 'genre' || (screen === 'loading' && loadingPrev === 'genre')) && (
         <GenreScreen
           selectedGenres={selectedGenres}
           onToggleGenre={handleToggleGenre}
