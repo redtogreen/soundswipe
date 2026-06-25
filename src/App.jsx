@@ -9,6 +9,8 @@ import ExpandScreen from './screens/ExpandScreen.jsx'
 import SavedScreen from './screens/SavedScreen.jsx'
 import RisingScreen from './screens/RisingScreen.jsx'
 import LoadingScreen from './screens/LoadingScreen.jsx'
+import ConnectServicesScreen from './screens/ConnectServicesScreen.jsx'
+import ManualSeedScreen from './screens/ManualSeedScreen.jsx'
 import Toast from './components/Toast.jsx'
 import Manifesto from './components/Manifesto.jsx'
 import AmplifySheet from './components/AmplifySheet.jsx'
@@ -534,11 +536,24 @@ export default function App() {
     }
   }
 
-  // ── Splash → Connect-or-Pick (or straight to Top Artists if already connected) ──
+  // ── Splash → Connect Services (new platform-choice onboarding) ──
   const handleSplashStart = () => {
     Analytics.splash_start({ has_spotify: Boolean(spotifyAuth?.accessToken) })
+    // Returning users with Spotify can skip the service picker
     if (spotifyAuth?.accessToken) navigate('top-artists')
-    else navigate('connect-or-pick')
+    else navigate('connect-services')
+  }
+
+  // From Connect Services → continue to whichever taste source is available.
+  // Spotify connected = use top artists API. Otherwise manual seed.
+  const handleConnectServicesContinue = () => {
+    if (spotifyAuth?.accessToken) navigate('top-artists')
+    else navigate('manual-seed')
+  }
+
+  // Manual seed → loading → swipe (same flow as TopArtistsConfirm)
+  const handleManualSeedStart = (seedArtists) => {
+    handleTopArtistsConfirm([], seedArtists)
   }
 
   // Connect-or-Pick handlers
@@ -879,6 +894,27 @@ export default function App() {
           onConnectSpotify={handleConnectFromOnboarding}
           onPickGenres={() => navigate('genre')}
           onBack={() => navigate('splash')}
+        />
+      )}
+
+      {screen === 'connect-services' && (
+        <ConnectServicesScreen
+          spotifyAuth={spotifyAuth}
+          appleAuth={appleAuth}
+          youtubeAuth={youtubeAuth}
+          onConnectSpotify={handleConnectFromOnboarding}
+          onConnectAppleMusic={handleConnectAppleMusic}
+          onConnectYouTube={handleConnectYouTube}
+          onContinue={handleConnectServicesContinue}
+          onPickGenres={() => navigate('genre')}
+          onBack={() => navigate('splash')}
+        />
+      )}
+
+      {screen === 'manual-seed' && (
+        <ManualSeedScreen
+          onStart={handleManualSeedStart}
+          onBack={() => navigate('connect-services')}
         />
       )}
 

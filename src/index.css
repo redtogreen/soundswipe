@@ -2397,6 +2397,275 @@ a:focus-visible {
   text-underline-offset: 3px;
 }
 
+/* ─── Connect Services + Manual Seed — splash-language match ───────── */
+.cs-screen, .ms-screen {
+  position: relative;
+  min-height: 100dvh;
+  background: linear-gradient(155deg, #F7C0CE 0%, #F2D78D 100%);
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.cs-header, .ms-header {
+  padding: 18px 22px 16px;
+}
+
+.cs-eyebrow, .ms-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(26, 21, 24, 0.55);
+  margin-bottom: 8px;
+}
+
+.cs-display, .ms-display {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 13vw, 64px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -2.2px;
+  color: var(--charcoal);
+  margin: 0 0 14px;
+}
+
+.cs-grad, .ms-grad {
+  background: linear-gradient(90deg, #1A1518, #5C3540);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cs-sub, .ms-sub {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(26, 21, 24, 0.75);
+  margin: 0;
+  max-width: 320px;
+}
+
+/* ─── Connect Services list ───────────────────────────────────────── */
+.cs-list {
+  padding: 4px 22px 110px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cs-list-label {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(26, 21, 24, 0.5);
+  padding: 8px 0 4px;
+}
+
+.cs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(250, 244, 237, 0.62);
+  border: 1px solid rgba(26, 21, 24, 0.15);
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  color: var(--charcoal);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  width: 100%;
+}
+
+.cs-row:hover { background: rgba(250, 244, 237, 0.85); }
+.cs-row:active { transform: scale(0.99); }
+.cs-row:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.cs-row-connected {
+  background: var(--charcoal);
+  color: #FAF4ED;
+  border-color: var(--charcoal);
+}
+
+.cs-row-preferred {
+  background: rgba(26, 21, 24, 0.08);
+  border-color: rgba(26, 21, 24, 0.3);
+}
+
+.cs-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-row-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+}
+
+.cs-row-tag {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.cs-row-cta {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.cs-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 22px calc(18px + var(--safe-bottom));
+  background: linear-gradient(to top, #F2D78D 60%, rgba(242, 215, 141, 0));
+  z-index: 5;
+}
+
+.cs-genre-link {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  margin-top: 12px;
+  color: var(--charcoal);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  cursor: pointer;
+  text-align: center;
+  padding: 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cs-genre-link:hover { opacity: 1; }
+
+/* ─── Manual Seed ──────────────────────────────────────────────────── */
+.ms-body {
+  flex: 1;
+  padding: 4px 22px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ms-input-row {
+  display: flex;
+  gap: 0;
+  margin-bottom: 14px;
+  border: 1px solid rgba(26, 21, 24, 0.3);
+  background: rgba(250, 244, 237, 0.7);
+}
+
+.ms-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--charcoal);
+  letter-spacing: -0.1px;
+}
+
+.ms-input::placeholder {
+  color: rgba(26, 21, 24, 0.4);
+}
+
+.ms-add-btn {
+  width: 52px;
+  background: var(--charcoal);
+  color: #FAF4ED;
+  border: none;
+  font-size: 22px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.ms-add-btn:active { transform: scale(0.95); }
+.ms-add-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.ms-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+  min-height: 36px;
+}
+
+.ms-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--charcoal);
+  color: #FAF4ED;
+  border: none;
+  padding: 8px 10px 8px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.ms-chip-name {
+  display: inline-block;
+}
+
+.ms-chip-x {
+  font-size: 18px;
+  line-height: 0.8;
+  opacity: 0.7;
+}
+
+.ms-chips-empty {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: rgba(26, 21, 24, 0.45);
+  padding: 8px 4px;
+  font-style: italic;
+}
+
+.ms-counter {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(26, 21, 24, 0.55);
+  margin-bottom: 14px;
+}
+
+.ms-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 22px calc(20px + var(--safe-bottom));
+  background: linear-gradient(to top, #F2D78D 60%, rgba(242, 215, 141, 0));
+}
+
 /* ─── Top Artists v2 — splash-language match ────────────────────────── */
 .ta-screen {
   position: relative;
