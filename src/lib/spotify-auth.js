@@ -5,10 +5,12 @@
 const AUTH_KEY = 'spotify_auth_v1'
 const VERIFIER_KEY = 'spotify_pkce_verifier'
 
-// Scopes — read profile, write playlists, read top artists, follow artists.
+// Scopes — read profile, write playlists, read top artists, follow artists,
+// AND streaming (for Stream Mode via Web Playback SDK — Premium users can
+// have their SoundSwipe listens count as real Spotify streams).
 // If you change this list, existing users will need to reconnect (show_dialog
 // is true so Spotify prompts for the new permissions).
-const SCOPES = 'user-read-private user-read-email user-top-read playlist-modify-public playlist-modify-private user-follow-modify'
+const SCOPES = 'user-read-private user-read-email user-top-read playlist-modify-public playlist-modify-private user-follow-modify streaming'
 
 const RETURN_TO_KEY = 'spotify_return_to'
 
@@ -129,6 +131,7 @@ export async function handleRedirect() {
       displayName: profile.display_name || profile.id,
       email: profile.email,
       image: profile.images?.[0]?.url || null,
+      product: profile.product || 'free', // 'premium' | 'free' — gates Stream Mode
     },
   }
   localStorage.setItem(AUTH_KEY, JSON.stringify(auth))

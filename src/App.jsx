@@ -34,6 +34,18 @@ import {
   subscribeToArtistChannel,
 } from './lib/youtube-auth.js'
 import { initAnalytics, Events as Analytics } from './lib/analytics.js'
+import {
+  isPlaybackSDKSupported,
+  canUseStreamMode,
+  initPlayer,
+  playSpotifyUri,
+  pauseSpotify,
+  setSpotifyVolume,
+  disconnectPlayer,
+  isPlayerReady,
+  isStreamModeOn,
+  setStreamMode as persistStreamMode,
+} from './lib/spotify-playback.js'
 
 // Filter artists by selected genres. Falls back to all artists if no match.
 function filterArtists(artists, selectedGenres) {
@@ -100,14 +112,46 @@ export default function App() {
   const [currentAudioSrc, setCurrentAudioSrc] = useState(null)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
 
-  // Update audio src whenever the top swipe-card changes, and try to play.
-  // First card on iOS will fail silently — user taps the audio button to start.
+  // Stream Mode — real Spotify playback (Premium + supported browser only).
+  // Off by default. When on, we use Spotify Web Playback SDK instead of
+  // iTunes previews so listens count as real streams.
+  const [streamMode, setStreamMode] = useState(() => isStreamModeOn())
+  const [streamModeReady, setStreamModeReady] = useState(false)
+  // Used by SavedScreen to show/hide the toggle without redundant checks
+  const streamModeAvailable = canUseStreamMode(spotifyAuth) && isPlaybackSDKSupported()
+
+  // Update playback whenever the top swipe-card changes. In Stream Mode
+  // (Premium + supported browser + toggle on), we route to the Spotify
+  // Web Playback SDK so each listen counts as a real Spotify stream.
+  // Otherwise we fall through to the iTunes preview MP3 in the <audio> tag.
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
     const topCard = screen === 'swipe' ? queue[0] : null
+
+    const streamActive = streamMode && streamModeReady && isPlayerReady()
+    const spotifyUri = topCard?.spotifyTrackUri || null
     const previewUrl = topCard?.previewUrl || null
-    if (previewUrl) {
+
+    if (streamActive && spotifyUri) {
+      // Real Spotify playback — kill the preview <audio> element
+      audio.pause()
+      setCurrentAudioSrc(spotifyUri)
+      playSpotifyUri(spotifyUri)
+        .then(() => setAudioStarted(true))
+        .catch((err) => {
+          console.warn('[stream] fallback to preview', err?.message)
+          // Fall back to preview if Spotify play fails (device gone, etc.)
+          if (previewUrl) {
+            audio.src = previewUrl
+            setCurrentAudioSrc(previewUrl)
+            audio.volume = isMuted ? 0 : 1
+            audio.play().then(() => setAudioStarted(true)).catch(() => {})
+          }
+        })
+    } else if (previewUrl) {
+      // Preview mode — ensure Spotify SDK isn't playing
+      pauseSpotify()
       if (audio.src !== previewUrl) {
         audio.src = previewUrl
         setCurrentAudioSrc(previewUrl)
@@ -117,12 +161,12 @@ export default function App() {
         .then(() => setAudioStarted(true))
         .catch(() => { /* autoplay blocked — first tap will start it */ })
     } else if (screen !== 'expand') {
-      // Don't pause when entering Expand — user may want to keep listening
       audio.pause()
+      pauseSpotify()
     }
     // We intentionally don't depend on isMuted here — separate effect handles it
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, screen])
+  }, [queue, screen, streamMode, streamModeReady])
 
   // Listen for play/pause events to keep isAudioPlaying in sync.
   useEffect(() => {
@@ -158,10 +202,13 @@ export default function App() {
     if (audio && !audio.paused) audio.pause()
   }
 
-  // Apply mute changes to live audio element
+  // Apply mute changes to live audio element AND Spotify player
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : 1
-  }, [isMuted])
+    if (streamMode && streamModeReady) {
+      setSpotifyVolume(isMuted ? 0 : 0.9)
+    }
+  }, [isMuted, streamMode, streamModeReady])
 
   // Pause audio whenever the page is hidden, backgrounded, or unloaded —
   // otherwise iOS will keep playing the looped track after the user closes
@@ -209,6 +256,55 @@ export default function App() {
 
   // Initialize analytics once on mount. No-op if VITE_POSTHOG_KEY isn't set.
   useEffect(() => { initAnalytics() }, [])
+
+  // Initialize Spotify Web Playback SDK when Stream Mode gets flipped on.
+  // Tear it down when flipped off or disconnected from Spotify.
+  useEffect(() => {
+    if (!streamMode) {
+      setStreamModeReady(false)
+      return
+    }
+    if (!canUseStreamMode(spotifyAuth)) {
+      setStreamModeReady(false)
+      return
+    }
+    let cancelled = false
+    initPlayer()
+      .then(() => { if (!cancelled) setStreamModeReady(true) })
+      .catch((err) => {
+        if (cancelled) return
+        setStreamModeReady(false)
+        showToast(`Stream mode couldn’t start: ${err?.message || 'unknown error'}`)
+        setStreamMode(false)
+        persistStreamMode(false)
+      })
+    return () => { cancelled = true }
+  }, [streamMode, spotifyAuth])
+
+  // Toggle Stream Mode from the UI
+  const handleToggleStreamMode = () => {
+    if (!streamMode) {
+      // Turning ON — pre-flight checks
+      if (!spotifyAuth?.accessToken) {
+        showToast('Connect Spotify to use Stream Mode')
+        return
+      }
+      if (spotifyAuth?.profile?.product !== 'premium') {
+        showToast('Stream Mode requires Spotify Premium')
+        return
+      }
+      if (!isPlaybackSDKSupported()) {
+        showToast('Stream Mode isn’t supported in this browser')
+        return
+      }
+    } else {
+      // Turning OFF — pause any active playback
+      pauseSpotify()
+    }
+    const next = !streamMode
+    setStreamMode(next)
+    persistStreamMode(next)
+  }
 
   // Persist core state to localStorage whenever it changes
   useEffect(() => {
@@ -274,6 +370,13 @@ export default function App() {
   const handleDisconnectSpotify = () => {
     clearAuth()
     setSpotifyAuth(null)
+    // Tear down Stream Mode too — no Spotify, no real streams
+    if (streamMode) {
+      setStreamMode(false)
+      persistStreamMode(false)
+      disconnectPlayer()
+      setStreamModeReady(false)
+    }
     showToast('Disconnected from Spotify')
   }
 
@@ -957,6 +1060,7 @@ export default function App() {
           isMuted={isMuted}
           audioStarted={audioStarted}
           onAudioTap={handleAudioTap}
+          streamMode={streamMode && streamModeReady}
         />
       )}
 
@@ -1013,6 +1117,10 @@ export default function App() {
           onImportPlaylist={handleImportPlaylist}
           isImporting={isImporting}
           onSeeRising={() => navigate('rising')}
+          streamMode={streamMode}
+          streamModeAvailable={streamModeAvailable}
+          streamModeReady={streamModeReady}
+          onToggleStreamMode={handleToggleStreamMode}
         />
       )}
 

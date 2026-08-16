@@ -33,6 +33,10 @@ export default function SavedScreen({
   youtubeConfigured,
   onConnectYouTube,
   onDisconnectYouTube,
+  streamMode,
+  streamModeAvailable,
+  streamModeReady,
+  onToggleStreamMode,
 }) {
   const appleConnected = Boolean(appleAuth?.authorized) && appleConfigured
   const youtubeConnected =
@@ -130,6 +134,33 @@ export default function SavedScreen({
               <button className="spotify-connect-btn" onClick={onConnectSpotify}>Connect →</button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Stream Mode toggle — only if Premium + supported browser */}
+      {streamModeAvailable && onToggleStreamMode && (
+        <div className="stream-mode-strip">
+          <div className="stream-mode-info">
+            <div className="stream-mode-label">
+              Stream Mode
+              {streamMode && streamModeReady && (
+                <span className="stream-mode-live">LIVE</span>
+              )}
+            </div>
+            <div className="stream-mode-desc">
+              {streamMode
+                ? 'Every 30-second listen counts as a real Spotify stream.'
+                : 'Turn on to make every listen a real Spotify stream.'}
+            </div>
+          </div>
+          <button
+            className={`stream-mode-toggle ${streamMode ? 'on' : ''}`}
+            onClick={onToggleStreamMode}
+            aria-pressed={streamMode}
+            aria-label="Toggle Stream Mode"
+          >
+            <span className="stream-mode-knob" />
+          </button>
         </div>
       )}
 

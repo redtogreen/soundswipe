@@ -134,28 +134,41 @@ export async function followSpotifyArtist(artistName) {
 // Code token (PKCE) DOES return preview_url. So we run this enrichment
 // client-side after the API hands us Last.fm-derived artists.
 
-// Enrich each artist with a higher-quality Spotify photo and the artist's
-// Spotify URL. Preview audio comes from iTunes (server-side) since Spotify
-// removed preview_url from API responses in Feb 2026.
+// Enrich each artist with a higher-quality Spotify photo, the artist's
+// Spotify URL, AND their top-track URI (used by Stream Mode to play real
+// Spotify audio via the Web Playback SDK). iTunes previews still cover
+// everyone who isn't Premium / on a supported browser.
 //
-// Runs all artists in parallel for speed (was sequential — 8+ seconds).
+// Runs all artists in parallel for speed. Two Spotify requests per artist
+// (artist + track) fired in parallel — same total latency as one.
 export async function enrichWithSpotify(artists) {
   const { token } = await getValidToken()
   const tasks = artists.map(async (a) => {
     try {
       const q = encodeURIComponent(`artist:"${a.name}"`)
-      const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${q}&type=artist&limit=1&market=US`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      if (!res.ok) return a
-      const data = await res.json()
-      const spArtist = data.artists?.items?.[0]
-      if (!spArtist) return a
+      const [artistRes, trackRes] = await Promise.all([
+        fetch(`https://api.spotify.com/v1/search?q=${q}&type=artist&limit=1&market=US`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1&market=US`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ])
+
+      const artistData = artistRes.ok ? await artistRes.json() : null
+      const trackData = trackRes.ok ? await trackRes.json() : null
+      const spArtist = artistData?.artists?.items?.[0]
+      const spTrack = trackData?.tracks?.items?.[0]
+
+      if (!spArtist && !spTrack) return a
       return {
         ...a,
-        photo: spArtist.images?.[0]?.url || a.photo,
-        spotifyUrl: spArtist.external_urls?.spotify || a.spotifyUrl,
+        photo: spArtist?.images?.[0]?.url || a.photo,
+        spotifyUrl: spArtist?.external_urls?.spotify || a.spotifyUrl,
+        spotifyTrackUri: spTrack?.uri || null,
+        spotifyTrackId: spTrack?.id || a.spotifyTrackId || null,
+        // Prefer the Spotify track name over the iTunes one if we found one
+        trackName: spTrack?.name || a.trackName || null,
       }
     } catch {
       return a

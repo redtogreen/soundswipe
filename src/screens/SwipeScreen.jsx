@@ -4,7 +4,7 @@ import { IconSkip, IconHear, IconSave, IconCircles } from '../components/Icons.j
 
 const HINTS_SEEN_KEY = 'soundswipe_hints_seen_v1'
 
-export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onPass, onExpand, onGoSaved, onBackToGenres, onChangeSource, isMuted, audioStarted, onAudioTap }) {
+export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onPass, onExpand, onGoSaved, onBackToGenres, onChangeSource, isMuted, audioStarted, onAudioTap, streamMode }) {
   const visible = queue.slice(0, 3)
 
   // Show onboarding hints once on first-ever swipe view
@@ -59,14 +59,22 @@ export default function SwipeScreen({ queue, setQueue, savedArtists, onSave, onP
       {/* Gradient masthead */}
       <div className="masthead">
         <span className="masthead-logo">SoundSwipe</span>
-        <button
-          className="masthead-btn"
-          onClick={onChangeSource}
-          aria-label="Change source"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-        >
-          {genreLabel || 'Change'} <span style={{ fontSize: 9 }}>▾</span>
-        </button>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          {streamMode && (
+            <span className="stream-mode-pill" title="Every 30-second listen counts as a Spotify stream">
+              <span className="stream-mode-dot" />
+              STREAM
+            </span>
+          )}
+          <button
+            className="masthead-btn"
+            onClick={onChangeSource}
+            aria-label="Change source"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            {genreLabel || 'Change'} <span style={{ fontSize: 9 }}>▾</span>
+          </button>
+        </div>
       </div>
 
       {/* Card stack */}
