@@ -112,13 +112,8 @@ export default function App() {
   const [currentAudioSrc, setCurrentAudioSrc] = useState(null)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
 
-  // Stream Mode — real Spotify playback (Premium + supported browser only).
-  // Off by default. When on, we use Spotify Web Playback SDK instead of
-  // iTunes previews so listens count as real streams.
-  const [streamMode, setStreamMode] = useState(() => isStreamModeOn())
-  const [streamModeReady, setStreamModeReady] = useState(false)
-  // Used by SavedScreen to show/hide the toggle without redundant checks
-  const streamModeAvailable = canUseStreamMode(spotifyAuth) && isPlaybackSDKSupported()
+  // Stream Mode state is declared LATER (after spotifyAuth) because
+  // streamModeAvailable needs to reference spotifyAuth — TDZ safety.
 
   // Update playback whenever the top swipe-card changes. In Stream Mode
   // (Premium + supported browser + toggle on), we route to the Spotify
@@ -253,6 +248,12 @@ export default function App() {
   // Apple Music + YouTube auth state — gated on env vars being configured.
   const [appleAuth, setAppleAuth] = useState(() => getStoredAppleAuth())
   const [youtubeAuth, setYoutubeAuth] = useState(() => getStoredYouTubeAuth())
+
+  // Stream Mode — real Spotify playback (Premium + supported browser only).
+  // Declared AFTER spotifyAuth because streamModeAvailable references it.
+  const [streamMode, setStreamMode] = useState(() => isStreamModeOn())
+  const [streamModeReady, setStreamModeReady] = useState(false)
+  const streamModeAvailable = canUseStreamMode(spotifyAuth) && isPlaybackSDKSupported()
 
   // Initialize analytics once on mount. No-op if VITE_POSTHOG_KEY isn't set.
   useEffect(() => { initAnalytics() }, [])
