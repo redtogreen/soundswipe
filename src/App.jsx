@@ -112,8 +112,12 @@ export default function App() {
   const [currentAudioSrc, setCurrentAudioSrc] = useState(null)
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
 
-  // Stream Mode state is declared LATER (after spotifyAuth) because
-  // streamModeAvailable needs to reference spotifyAuth — TDZ safety.
+  // Stream Mode state — declared BEFORE the audio useEffect below because
+  // that effect's dep array references streamMode + streamModeReady.
+  // (`streamModeAvailable` is computed further down, after spotifyAuth
+  // becomes available.)
+  const [streamMode, setStreamMode] = useState(() => isStreamModeOn())
+  const [streamModeReady, setStreamModeReady] = useState(false)
 
   // Update playback whenever the top swipe-card changes. In Stream Mode
   // (Premium + supported browser + toggle on), we route to the Spotify
@@ -249,10 +253,7 @@ export default function App() {
   const [appleAuth, setAppleAuth] = useState(() => getStoredAppleAuth())
   const [youtubeAuth, setYoutubeAuth] = useState(() => getStoredYouTubeAuth())
 
-  // Stream Mode — real Spotify playback (Premium + supported browser only).
-  // Declared AFTER spotifyAuth because streamModeAvailable references it.
-  const [streamMode, setStreamMode] = useState(() => isStreamModeOn())
-  const [streamModeReady, setStreamModeReady] = useState(false)
+  // Stream Mode gating — depends on spotifyAuth being in scope.
   const streamModeAvailable = canUseStreamMode(spotifyAuth) && isPlaybackSDKSupported()
 
   // Initialize analytics once on mount. No-op if VITE_POSTHOG_KEY isn't set.
